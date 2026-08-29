@@ -1,38 +1,83 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@heroui/react";
 import Image from "next/image";
 import logo from "../../../public/assets/logo.png";
 import Theme from "./Theme";
+import { useSession, signOut } from "@/lib/auth-client";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const dropdownRef = useRef(null);
   const pathname = usePathname();
 
-  // Navigation Links
+  // Retrieve authenticated session
+  const { data: session, isPending } = useSession();
+  const user = session?.user;
+  const userRole = user?.role || "user";
+
+  // Close profile dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Determine Dashboard route based on user role
+  const getDashboardHref = (role) => {
+    switch (role) {
+      case "admin":
+        return "/admin/dashboard";
+      case "trainer":
+        return "/trainer/dashboard";
+      default:
+        return "/dashboard";
+    }
+  };
+
+  // Base navigation items
   const navItems = [
     { label: "Home", href: "/" },
     { label: "All Classes", href: "/classes" },
     { label: "Community Forum", href: "/forum" },
   ];
 
-  // Helper to determine exact or nested active state
+  // Dynamically add Dashboard link when user is logged in
+  if (user) {
+    navItems.push({
+      label: "Dashboard",
+      href: getDashboardHref(userRole),
+    });
+  }
+
   const isLinkActive = (href) => {
     if (href === "/") return pathname === "/";
     return pathname.startsWith(href);
   };
 
-  const handleAuthToggle = () => {
-    setIsLoggedIn(!isLoggedIn);
+  const handleLogout = async () => {
+    setIsProfileOpen(false);
     setIsMenuOpen(false);
+    await signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          window.location.href = "/login";
+        },
+      },
+    });
   };
 
   return (
-    <nav className="sticky top-0 z-40 w-full border-b border-divider bg-background/80 backdrop-blur-md">
+    <nav className="sticky top-0 z-50 w-full border-b border-divider bg-background/80 backdrop-blur-md">
       <header className="mx-auto flex h-16 max-w-[1280px] items-center justify-between px-4 sm:px-6">
         {/* Left: Brand Logo & Name */}
         <Link
@@ -51,8 +96,8 @@ const Navbar = () => {
           </p>
         </Link>
 
-        {/* Right (Desktop): Menu Links + Theme Toggle + Auth Button */}
-        <div className="hidden md:flex items-center gap-5">
+        {/* Right (Desktop): Navigation Links + Theme + User Profile / Login */}
+        <div className="hidden md:flex items-center gap-4">
           <ul className="flex items-center gap-1 lg:gap-2">
             {navItems.map((item) => {
               const active = isLinkActive(item.href);
@@ -77,15 +122,103 @@ const Navbar = () => {
 
           <Theme />
 
-          <Button
-            size="sm"
-            color={isLoggedIn ? "danger" : "primary"}
-            variant={isLoggedIn ? "flat" : "solid"}
-            radius="full"
-            className="px-5 font-semibold shadow-sm"
-            onPress={handleAuthToggle}>
-            {isLoggedIn ? "Logout" : "Login"}
-          </Button>
+          {/* User Auth / Profile Dropdown */}
+          {isPending ? (
+            <div className="h-9 w-9 rounded-full bg-default-200 animate-pulse" />
+          ) : user ? (
+            <div className="relative" ref={dropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                className="flex items-center gap-2.5 rounded-full py-1 pl-1 pr-2 transition-all hover:bg-default-100 focus:outline-none">
+                {/* Next Image Avatar with Fallback */}
+                <div className="relative h-8 w-8 overflow-hidden rounded-full ring-2 ring-cyan-500/40 bg-cyan-600 flex items-center justify-center shrink-0">
+                  {user.image && !imageError ? (
+                    <Image
+                      src={user.image}
+                      alt={user.name || "User Avatar"}
+                      fill
+                      sizes="32px"
+                      unoptimized
+                      onError={() => setImageError(true)}
+                      className="object-cover"
+                    />
+                  ) : (
+                    <span className="text-xs font-bold text-white uppercase">
+                      {user.name ? user.name.charAt(0) : "U"}
+                    </span>
+                  )}
+                </div>
+
+                {/* Welcome Back Greeting */}
+                <div className="flex flex-col text-left">
+                  <span className="text-[10px] text-foreground-500 leading-tight">
+                    Welcome back,
+                  </span>
+                  <span className="text-xs font-bold max-w-[110px] truncate text-foreground leading-tight">
+                    {user.name?.split(" ")[0] || "User"}
+                  </span>
+                </div>
+
+                <svg
+                  className={`h-4 w-4 text-foreground-500 transition-transform ${
+                    isProfileOpen ? "rotate-180" : ""
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </button>
+
+              {/* Dropdown Menu */}
+              {isProfileOpen && (
+                <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-divider bg-background/95 p-2 shadow-2xl backdrop-blur-xl z-50 animate-in fade-in zoom-in-95 duration-100">
+                  <div className="px-3 py-2 border-b border-divider mb-1">
+                    <p className="text-[11px] font-medium text-foreground-500">
+                      Welcome back,
+                    </p>
+                    <p className="text-sm font-bold truncate text-foreground">
+                      {user.name || user.email}
+                    </p>
+                    <span className="inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-cyan-500/15 text-cyan-600 dark:text-cyan-400">
+                      {userRole}
+                    </span>
+                  </div>
+
+                  <Link
+                    href={getDashboardHref(userRole)}
+                    onClick={() => setIsProfileOpen(false)}
+                    className="flex w-full items-center px-3 py-2 text-sm rounded-xl font-medium text-foreground hover:bg-default-100 transition-colors">
+                    Dashboard
+                  </Link>
+
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="flex w-full items-center px-3 py-2 text-sm rounded-xl font-medium text-danger hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors">
+                    Log Out
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link href="/login">
+              <Button
+                size="sm"
+                color="primary"
+                variant="solid"
+                radius="full"
+                className="px-5 font-semibold shadow-sm">
+                Login
+              </Button>
+            </Link>
+          )}
         </div>
 
         {/* Right (Mobile): Theme Toggle & Hamburger Button */}
@@ -126,6 +259,38 @@ const Navbar = () => {
       {/* Mobile Drawer Menu */}
       {isMenuOpen && (
         <div className="border-t border-divider bg-background px-4 py-3 shadow-lg md:hidden animate-in slide-in-from-top-2 duration-150">
+          {/* User Info Header on Mobile */}
+          {user && (
+            <div className="flex items-center gap-3 pb-3 mb-2 border-b border-divider">
+              <div className="relative h-10 w-10 overflow-hidden rounded-full ring-2 ring-cyan-500/40 bg-cyan-600 flex items-center justify-center shrink-0">
+                {user.image && !imageError ? (
+                  <Image
+                    src={user.image}
+                    alt={user.name || "User Avatar"}
+                    fill
+                    sizes="40px"
+                    unoptimized
+                    onError={() => setImageError(true)}
+                    className="object-cover"
+                  />
+                ) : (
+                  <span className="text-sm font-bold text-white uppercase">
+                    {user.name ? user.name.charAt(0) : "U"}
+                  </span>
+                )}
+              </div>
+              <div className="truncate">
+                <p className="text-[11px] text-foreground-500">Welcome back,</p>
+                <p className="text-sm font-bold truncate text-foreground">
+                  {user.name || "User"}
+                </p>
+                <span className="inline-block mt-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-cyan-500/15 text-cyan-600 dark:text-cyan-400">
+                  {userRole}
+                </span>
+              </div>
+            </div>
+          )}
+
           <ul className="flex flex-col gap-1">
             {navItems.map((item) => {
               const active = isLinkActive(item.href);
@@ -144,15 +309,29 @@ const Navbar = () => {
                 </li>
               );
             })}
+
             <li className="mt-3 border-t border-divider pt-3">
-              <Button
-                size="sm"
-                color={isLoggedIn ? "danger" : "primary"}
-                variant={isLoggedIn ? "flat" : "solid"}
-                className="w-full justify-center font-semibold"
-                onPress={handleAuthToggle}>
-                {isLoggedIn ? "Logout" : "Login"}
-              </Button>
+              {user ? (
+                <Button
+                  size="sm"
+                  color="danger"
+                  variant="flat"
+                  className="w-full justify-center font-semibold"
+                  onPress={handleLogout}>
+                  Logout
+                </Button>
+              ) : (
+                <Link href="/login" className="w-full block">
+                  <Button
+                    size="sm"
+                    color="primary"
+                    variant="solid"
+                    className="w-full justify-center font-semibold"
+                    onClick={() => setIsMenuOpen(false)}>
+                    Login
+                  </Button>
+                </Link>
+              )}
             </li>
           </ul>
         </div>

@@ -37,7 +37,6 @@ export default function Testimonials() {
   return (
     <section className="py-10 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
           <span className="px-3.5 py-1.5 rounded-full bg-cyan-100 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 text-xs font-bold uppercase tracking-wider">
             Success Stories
@@ -51,7 +50,6 @@ export default function Testimonials() {
           </p>
         </div>
 
-        {/* Testimonials Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {reviews.map((rev, index) => (
             <div
@@ -60,7 +58,6 @@ export default function Testimonials() {
               <Quote className="w-10 h-10 text-emerald-500/20 absolute top-6 right-6" />
 
               <div className="space-y-4">
-                {/* Rating Stars */}
                 <div className="flex items-center gap-1 text-amber-400">
                   {[...Array(rev.rating)].map((_, i) => (
                     <Star key={i} className="w-4 h-4 fill-amber-400" />
@@ -72,7 +69,6 @@ export default function Testimonials() {
                 </p>
               </div>
 
-              {/* Reviewer Details */}
               <div className="flex items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
                 <img
                   src={rev.avatar}

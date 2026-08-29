@@ -1,7 +1,13 @@
-import Image from "next/image";
+import Hero from "@/components/home/Hero";
+import Testimonials from "@/components/home/Testimonials";
+import WhyChooseUs from "@/components/home/WhyChooseUs";
 
 export default function Home() {
   return (
-    <h2>  HII from Fitness for Life</h2>
+    <main>
+      <Hero />
+      <WhyChooseUs></WhyChooseUs>
+      <Testimonials></Testimonials>
+    </main>
   );
 }

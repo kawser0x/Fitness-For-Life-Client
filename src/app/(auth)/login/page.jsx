@@ -14,6 +14,7 @@ import {
   AlertCircle,
   CheckCircle2,
 } from "lucide-react";
+import Image from "next/image";
 
 function LoginForm() {
   const router = useRouter();
@@ -88,10 +89,16 @@ function LoginForm() {
     <div className="w-full max-w-md space-y-8 bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl">
       <div className="text-center space-y-3">
         <div className="inline-flex p-3 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-400 text-white shadow-lg shadow-emerald-500/20">
-          <Dumbbell className="w-8 h-8 stroke-[2.5]" />
+          <Image
+            src="/assets/logo.png"
+            alt="Fitness For Life Logo"
+            width={60}
+            height={60}
+          />
         </div>
         <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-          Welcome Back to <span className="text-emerald-600">IronPulse</span>
+          Welcome Back to{" "}
+          <span className="text-emerald-600">Fitness For Life</span>
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
           Log in to access your classes, forum posts, and dashboard.
@@ -113,7 +120,6 @@ function LoginForm() {
       )}
 
       <form onSubmit={handleCredentialLogin} className="space-y-5">
- 
         <div className="space-y-1.5">
           <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
             Email Address

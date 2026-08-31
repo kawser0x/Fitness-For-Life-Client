@@ -3,7 +3,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Button } from "@heroui/react";
 import Image from "next/image";
 import logo from "../../../public/assets/logo.png";
 import Theme from "./Theme";
@@ -32,32 +31,24 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Determine Dashboard route based on user role
+  // Determine Dashboard route based on folder structure
   const getDashboardHref = (role) => {
     switch (role) {
       case "admin":
-        return "/admin/dashboard";
+        return "/dashboard/admin";
       case "trainer":
-        return "/trainer/dashboard";
+        return "/dashboard/trainer";
       default:
-        return "/dashboard";
+        return "/dashboard/user";
     }
   };
 
-  // Base navigation items
+  // Base navigation items (Dashboard only shown if user is logged in via profile dropdown)
   const navItems = [
     { label: "Home", href: "/" },
     { label: "All Classes", href: "/classes" },
     { label: "Community Forum", href: "/forum" },
   ];
-
-  // Dynamically add Dashboard link when user is logged in
-  if (user) {
-    navItems.push({
-      label: "Dashboard",
-      href: getDashboardHref(userRole),
-    });
-  }
 
   const isLinkActive = (href) => {
     if (href === "/") return pathname === "/";
@@ -131,7 +122,6 @@ const Navbar = () => {
                 type="button"
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="flex items-center gap-2.5 rounded-full py-1 pl-1 pr-2 transition-all hover:bg-default-100 focus:outline-none">
-                {/* Next Image Avatar with Fallback */}
                 <div className="relative h-8 w-8 overflow-hidden rounded-full ring-2 ring-cyan-500/40 bg-cyan-600 flex items-center justify-center shrink-0">
                   {user.image && !imageError ? (
                     <Image
@@ -150,7 +140,6 @@ const Navbar = () => {
                   )}
                 </div>
 
-                {/* Welcome Back Greeting */}
                 <div className="flex flex-col text-left">
                   <span className="text-[10px] text-foreground-500 leading-tight">
                     Welcome back,
@@ -178,7 +167,7 @@ const Navbar = () => {
 
               {/* Dropdown Menu */}
               {isProfileOpen && (
-                <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-divider bg-background/95 p-2 shadow-2xl backdrop-blur-xl z-50 animate-in fade-in zoom-in-95 duration-100">
+                <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-divider bg-background/95 p-2 shadow-2xl backdrop-blur-xl z-50">
                   <div className="px-3 py-2 border-b border-divider mb-1">
                     <p className="text-[11px] font-medium text-foreground-500">
                       Welcome back,
@@ -208,29 +197,21 @@ const Navbar = () => {
               )}
             </div>
           ) : (
-            <Link href="/login">
-              <Button
-                size="sm"
-                color="primary"
-                variant="solid"
-                radius="full"
-                className="px-5 font-semibold shadow-sm">
-                Login
-              </Button>
+            <Link
+              href="/login"
+              className="px-5 py-1.5 rounded-full font-semibold text-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm">
+              Login
             </Link>
           )}
         </div>
 
-        {/* Right (Mobile): Theme Toggle & Hamburger Button */}
+        {/* Right (Mobile): Hamburger Button */}
         <div className="flex items-center gap-2 md:hidden">
           <Theme />
-
           <button
             className="rounded-lg p-1.5 text-foreground transition-colors hover:bg-default-100"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-label="Toggle menu"
-            aria-expanded={isMenuOpen}>
-            <span className="sr-only">Menu</span>
+            aria-label="Toggle menu">
             <svg
               className="h-6 w-6"
               fill="none"
@@ -258,8 +239,7 @@ const Navbar = () => {
 
       {/* Mobile Drawer Menu */}
       {isMenuOpen && (
-        <div className="border-t border-divider bg-background px-4 py-3 shadow-lg md:hidden animate-in slide-in-from-top-2 duration-150">
-          {/* User Info Header on Mobile */}
+        <div className="border-t border-divider bg-background px-4 py-3 shadow-lg md:hidden">
           {user && (
             <div className="flex items-center gap-3 pb-3 mb-2 border-b border-divider">
               <div className="relative h-10 w-10 overflow-hidden rounded-full ring-2 ring-cyan-500/40 bg-cyan-600 flex items-center justify-center shrink-0">
@@ -310,26 +290,31 @@ const Navbar = () => {
               );
             })}
 
+            {user && (
+              <li>
+                <Link
+                  href={getDashboardHref(userRole)}
+                  onClick={() => setIsMenuOpen(false)}
+                  className="block rounded-lg px-3 py-2 text-sm font-medium text-foreground-700 hover:bg-default-100">
+                  Dashboard
+                </Link>
+              </li>
+            )}
+
             <li className="mt-3 border-t border-divider pt-3">
               {user ? (
-                <Button
-                  size="sm"
-                  color="danger"
-                  variant="flat"
-                  className="w-full justify-center font-semibold"
-                  onPress={handleLogout}>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="w-full py-2 rounded-lg text-sm font-semibold text-danger bg-danger-50 dark:bg-danger-900/20 text-center">
                   Logout
-                </Button>
+                </button>
               ) : (
-                <Link href="/login" className="w-full block">
-                  <Button
-                    size="sm"
-                    color="primary"
-                    variant="solid"
-                    className="w-full justify-center font-semibold"
-                    onClick={() => setIsMenuOpen(false)}>
-                    Login
-                  </Button>
+                <Link
+                  href="/login"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="block w-full py-2 rounded-lg text-sm font-semibold text-white bg-blue-600 text-center">
+                  Login
                 </Link>
               )}
             </li>

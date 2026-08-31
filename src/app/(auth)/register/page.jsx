@@ -20,6 +20,7 @@ import {
   ShieldCheck,
   UserCheck,
 } from "lucide-react";
+import Image from "next/image";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -140,13 +141,18 @@ export default function RegisterPage() {
         <div className="w-full max-w-md space-y-8 bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl">
           <div className="text-center space-y-3">
             <div className="inline-flex p-3 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-400 text-white shadow-lg shadow-emerald-500/20">
-              <Dumbbell className="w-8 h-8 stroke-[2.5]" />
+              <Image
+                src="/assets/logo.png"
+                alt="Fitness For Life Logo"
+                width={60}
+                height={60}
+              />
             </div>
             <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
               Create Your <span className="text-emerald-600">Account</span>
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Join IronPulse today and start your fitness transformation.
+              Join Fitness For Life today and start your fitness transformation.
             </p>
           </div>
 
@@ -187,7 +193,7 @@ export default function RegisterPage() {
                   onClick={() => handleRoleSelect("trainer")}
                   className={`p-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
                     formData.role === "trainer"
-                      ? "border-purple-500 bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold ring-2 ring-purple-500/30"
+                      ? "border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold ring-2 ring-blue-500/30"
                       : "border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                   }`}>
                   <ShieldCheck className="w-4 h-4" />

@@ -5,7 +5,6 @@ import { toast } from "react-toastify";
 import {
   FaPlus,
   FaDumbbell,
-  FaImage,
   FaLayerGroup,
   FaGauge,
   FaClock,
@@ -15,8 +14,13 @@ import {
   FaPaperPlane,
 } from "react-icons/fa6";
 import { Button } from "@heroui/react/button";
+import ImgBBUpload from "@/components/shared/ImgBBUpload";
+import { useSession } from "@/lib/auth-client";
 
 export default function AddClassPage() {
+  const { data: session } = useSession();
+  const user = session?.user;
+
   const [loading, setLoading] = useState(false);
 
   // Form Fields according to PDF requirements
@@ -31,17 +35,42 @@ export default function AddClassPage() {
     description: "",
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!formData.image) {
+      toast.error("Please upload or provide an image for the class!");
+      return;
+    }
+
     setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+      const response = await fetch(`${API_URL}/api/classes`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...formData,
+          trainerEmail: user?.email || "elena.rostova@fitness.com",
+          trainerName: user?.name || "Elena Rostova",
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create class");
+      }
+
       toast.success(
-        `Class "${formData.className}" added successfully! Status set to Pending.`,
+        `Class "${formData.className}" submitted successfully! Status set to Pending.`,
         {
           description: "Admin will review and approve your class.",
-        },
+        }
       );
 
       // Reset form
@@ -55,7 +84,12 @@ export default function AddClassPage() {
         price: "",
         description: "",
       });
-    }, 1200);
+    } catch (error) {
+      console.error("Error submitting class:", error);
+      toast.error(error.message || "Failed to submit class to database");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -86,7 +120,7 @@ export default function AddClassPage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {/* Class Name */}
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 sm:col-span-2">
               <label className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
                 <FaDumbbell className="h-3.5 w-3.5 text-cyan-500" />
                 Class Name
@@ -103,21 +137,13 @@ export default function AddClassPage() {
               />
             </div>
 
-            {/* Image URL */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
-                <FaImage className="h-3.5 w-3.5 text-blue-500" />
-                Image URL
-              </label>
-              <input
-                type="url"
-                required
+            {/* ImgBB Image Upload Component */}
+            <div className="sm:col-span-2">
+              <ImgBBUpload
                 value={formData.image}
-                onChange={(e) =>
-                  setFormData({ ...formData, image: e.target.value })
-                }
-                placeholder="https://example.com/class-image.jpg"
-                className="w-full px-4 py-2.5 rounded-xl  border border-border text-foreground text-sm focus:outline-none focus:border-cyan-500 transition"
+                onChange={(url) => setFormData({ ...formData, image: url })}
+                label="Class Cover Image (ImgBB Upload Required)"
+                required
               />
             </div>
 
@@ -176,7 +202,7 @@ export default function AddClassPage() {
                   setFormData({ ...formData, duration: e.target.value })
                 }
                 placeholder="e.g. 45 mins / 60 mins"
-                className="w-full px-4 py-2.5 rounded-xl  border border-border text-foreground text-sm focus:outline-none focus:border-cyan-500 transition"
+                className="w-full px-4 py-2.5 rounded-xl border border-border text-foreground text-sm focus:outline-none focus:border-cyan-500 transition"
               />
             </div>
 

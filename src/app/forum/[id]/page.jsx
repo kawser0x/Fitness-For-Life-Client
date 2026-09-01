@@ -135,20 +135,21 @@ export default function ForumPostDetailsPage({ params }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userEmail: user.email,
-          userName: user.name || "Member",
+          userName: user.name || user.email.split("@")[0] || "Member",
           userImage: user.image || "/assets/logo.png",
           commentText: newCommentText.trim(),
         }),
       });
 
-      if (!res.ok) throw new Error("Failed to post comment");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to post comment");
 
       toast.success("Comment posted successfully!");
       setNewCommentText("");
       fetchComments();
     } catch (error) {
       console.error("Error posting comment:", error);
-      toast.error("Failed to post comment");
+      toast.error(error.message || "Failed to post comment");
     } finally {
       setCommentSubmitting(false);
     }
@@ -194,38 +195,13 @@ export default function ForumPostDetailsPage({ params }) {
     }
   };
 
-  // PDF Rule: Authentication Required on Post Details Page
-  if (sessionLoading || loading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-3 p-4">
         <FaSpinner className="h-10 w-10 text-cyan-500 animate-spin" />
         <p className="text-sm font-semibold text-muted-foreground">
           Loading forum article details...
         </p>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-background py-16 px-4 text-center">
-        <div className="max-w-md mx-auto bg-card border border-border rounded-3xl p-8 shadow-xl space-y-4">
-          <div className="w-16 h-16 rounded-full bg-cyan-500/10 text-cyan-500 flex items-center justify-center mx-auto">
-            <FaLock className="h-7 w-7" />
-          </div>
-          <h2 className="text-2xl font-extrabold text-foreground">
-            Authentication Required
-          </h2>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Please log in to your account to read full forum articles, vote, and participate in community discussions.
-          </p>
-          <Button
-            as={Link}
-            href="/login"
-            className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold py-3 rounded-xl shadow-md">
-            Log In to Read Article
-          </Button>
-        </div>
       </div>
     );
   }
@@ -241,8 +217,9 @@ export default function ForumPostDetailsPage({ params }) {
     );
   }
 
-  const hasLiked = post.likes?.includes(user?.email);
-  const hasDisliked = post.dislikes?.includes(user?.email);
+  const userEmail = user?.email || "";
+  const hasLiked = post.likes?.includes(userEmail);
+  const hasDisliked = post.dislikes?.includes(userEmail);
   const isDirectImage = post.image && (post.image.includes("i.ibb.co") || post.image.includes("images.unsplash") || post.image.match(/\.(jpeg|jpg|gif|png|webp)/i));
   const imageSrc = isDirectImage ? post.image : FALLBACK_IMAGE;
 
@@ -353,25 +330,36 @@ export default function ForumPostDetailsPage({ params }) {
           </h3>
 
           {/* Post New Comment Form */}
-          <form onSubmit={handleCommentSubmit} className="space-y-3">
-            <textarea
-              rows={3}
-              required
-              value={newCommentText}
-              onChange={(e) => setNewCommentText(e.target.value)}
-              placeholder="Write your thoughts, questions, or comments on this article..."
-              className="w-full px-4 py-3 rounded-2xl border border-border text-foreground text-sm focus:outline-none focus:border-cyan-500 transition leading-relaxed bg-background"
-            />
-            <div className="flex justify-end">
-              <Button
-                type="submit"
-                isLoading={commentSubmitting}
-                className="bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold shadow-md rounded-xl"
-                startContent={!commentSubmitting && <FaPaperPlane className="h-3.5 w-3.5" />}>
-                Post Comment
+          {user ? (
+            <form onSubmit={handleCommentSubmit} className="space-y-3">
+              <textarea
+                rows={3}
+                required
+                value={newCommentText}
+                onChange={(e) => setNewCommentText(e.target.value)}
+                placeholder="Write your thoughts, questions, or comments on this article..."
+                className="w-full px-4 py-3 rounded-2xl border border-border text-foreground text-sm focus:outline-none focus:border-cyan-500 transition leading-relaxed bg-background"
+              />
+              <div className="flex justify-end">
+                <Button
+                  type="submit"
+                  isLoading={commentSubmitting}
+                  className="bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold shadow-md rounded-xl"
+                  startContent={!commentSubmitting && <FaPaperPlane className="h-3.5 w-3.5" />}>
+                  Post Comment
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <div className="p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-xs text-cyan-600 dark:text-cyan-300 flex items-center justify-between gap-4">
+              <span className="flex items-center gap-2 font-medium">
+                <FaLock className="h-4 w-4 shrink-0" /> Log in to join the discussion and post comments.
+              </span>
+              <Button as={Link} href="/login" size="sm" className="bg-cyan-600 text-white font-bold shrink-0">
+                Log In
               </Button>
             </div>
-          </form>
+          )}
 
           {/* Comments List */}
           <div className="space-y-4 pt-4 border-t border-border">
@@ -386,7 +374,7 @@ export default function ForumPostDetailsPage({ params }) {
               </div>
             ) : (
               comments.map((comment) => {
-                const isMyComment = comment.userEmail === user?.email;
+                const isMyComment = userEmail && comment.userEmail === userEmail;
                 const isEditing = editingCommentId === comment._id;
 
                 return (

@@ -53,6 +53,7 @@ export default function AllClassesPage() {
     return FALLBACK_CLASS_IMAGE;
   };
 
+  // Fetch Classes from Backend MongoDB API
   const fetchClasses = useCallback(async () => {
     try {
       setLoading(true);
@@ -84,7 +85,6 @@ export default function AllClassesPage() {
     fetchClasses();
   }, [fetchClasses]);
 
-  // Reset page to 1 when search or category changes
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
     setPage(1);
@@ -98,8 +98,8 @@ export default function AllClassesPage() {
   return (
     <div className="min-h-screen bg-background pb-16">
       {/* HERO BANNER SECTION */}
-      <section className="relative py-8 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-background via-cyan-950/20 to-background border-b border-border overflow-hidden">
-        <div className="max-w-7xl mx-auto space-y-4 text-center">
+      <section className="relative py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-background via-cyan-950/20 to-background border-b border-border overflow-hidden">
+        <div className="max-w-7xl mx-auto space-y-6 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold bg-cyan-500/10 text-cyan-500 border border-cyan-500/20 uppercase tracking-widest">
             <FaDumbbell className="h-3.5 w-3.5" /> Certified Expert Trainers
           </div>
@@ -138,7 +138,7 @@ export default function AllClassesPage() {
       </section>
 
       {/* MAIN CONTAINER */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-7 space-y-5">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
         {/* CATEGORIES FILTER BAR */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
@@ -201,8 +201,9 @@ export default function AllClassesPage() {
               <div
                 key={cls._id}
                 className="group bg-card border border-border rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:border-cyan-500/50 transition-all duration-300 flex flex-col">
-                {/* Class Image Banner */}
-                <div className="relative w-full h-52 bg-accent overflow-hidden">
+                
+                {/* Class Image Banner (Clickable Link) */}
+                <Link href={`/classes/${cls._id}`} className="relative w-full h-52 bg-accent overflow-hidden block">
                   <Image
                     src={getValidClassImage(cls.image)}
                     alt={cls.className}
@@ -230,14 +231,16 @@ export default function AllClassesPage() {
                       {cls.difficultyLevel}
                     </span>
                   </div>
-                </div>
+                </Link>
 
                 {/* Content */}
                 <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
                   <div className="space-y-2">
-                    <h3 className="text-lg font-bold text-foreground group-hover:text-cyan-500 transition line-clamp-1">
-                      {cls.className}
-                    </h3>
+                    <Link href={`/classes/${cls._id}`} className="block">
+                      <h3 className="text-lg font-bold text-foreground group-hover:text-cyan-500 transition line-clamp-1">
+                        {cls.className}
+                      </h3>
+                    </Link>
                     <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                       {cls.description}
                     </p>
@@ -261,14 +264,13 @@ export default function AllClassesPage() {
                     </div>
                   </div>
 
-                  {/* View Details Button */}
-                  <Button
-                    as={Link}
+                  {/* View Details & Book Link Button */}
+                  <Link
                     href={`/classes/${cls._id}`}
-                    className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold rounded-2xl shadow-md hover:from-blue-700 hover:to-cyan-600 transition"
-                    endContent={<FaArrowRight className="h-3.5 w-3.5" />}>
-                    View Details & Book
-                  </Button>
+                    className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold text-xs rounded-2xl shadow-md hover:from-blue-700 hover:to-cyan-600 transition flex items-center justify-center gap-2 group-hover:shadow-cyan-500/20">
+                    <span>View Details & Book</span>
+                    <FaArrowRight className="h-3.5 w-3.5" />
+                  </Link>
                 </div>
               </div>
             ))}

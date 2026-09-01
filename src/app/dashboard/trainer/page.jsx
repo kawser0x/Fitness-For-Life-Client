@@ -66,7 +66,6 @@ export default function TrainerOverviewPage() {
 
   return (
     <div className="space-y-8">
-      {/* Page Title & Welcome Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-blue-600/10 via-cyan-500/10 to-transparent p-6 rounded-2xl border border-blue-500/20">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -93,9 +92,8 @@ export default function TrainerOverviewPage() {
         </div>
       </div>
 
-      {/* 1. Statistics Cards Section */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Total Classes Created Card */}
+
         <motion.div
           whileHover={{ y: -4 }}
           className="p-6 rounded-2xl bg-card border border-border shadow-sm flex items-center justify-between">
@@ -117,7 +115,6 @@ export default function TrainerOverviewPage() {
           </div>
         </motion.div>
 
-        {/* Total Students Enrolled Card */}
         <motion.div
           whileHover={{ y: -4 }}
           className="p-6 rounded-2xl bg-card border border-border shadow-sm flex items-center justify-between">
@@ -137,7 +134,6 @@ export default function TrainerOverviewPage() {
           </div>
         </motion.div>
 
-        {/* Pending Approval Stat */}
         <motion.div
           whileHover={{ y: -4 }}
           className="p-6 rounded-2xl bg-card border border-border shadow-sm flex items-center justify-between">

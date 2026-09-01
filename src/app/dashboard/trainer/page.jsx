@@ -11,7 +11,18 @@ import {
   FaIdBadge,
   FaCalendarCheck,
   FaPlus,
+  FaChartColumn,
 } from "react-icons/fa6";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
 import { Button } from "@heroui/react/button";
 import { useAuthQuery } from "better-auth/client";
 
@@ -31,6 +42,17 @@ export default function TrainerOverviewPage() {
     totalClassesCreated: 8,
     totalStudentsEnrolled: 154,
   };
+
+  // Recharts Trainer Monthly Attendance & Bookings Data
+  const attendanceData = [
+    { day: "Mon", HIIT: 24, Yoga: 18, Strength: 12 },
+    { day: "Tue", HIIT: 20, Yoga: 22, Strength: 15 },
+    { day: "Wed", HIIT: 30, Yoga: 25, Strength: 18 },
+    { day: "Thu", HIIT: 25, Yoga: 20, Strength: 14 },
+    { day: "Fri", HIIT: 32, Yoga: 28, Strength: 22 },
+    { day: "Sat", HIIT: 40, Yoga: 35, Strength: 30 },
+    { day: "Sun", HIIT: 28, Yoga: 30, Strength: 20 },
+  ];
 
   return (
     <div className="space-y-8">
@@ -107,7 +129,70 @@ export default function TrainerOverviewPage() {
         </motion.div>
       </div>
 
-      {/* 2. Trainer Profile Details Card */}
+      {/* 2. RECHARTS ATTENDANCE & BOOKING ANALYTICS */}
+      <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+              <FaChartColumn className="h-5 w-5 text-cyan-500" />
+              Weekly Class Attendance Analytics
+            </h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Live student attendance tracking across your hosted sessions.
+            </p>
+          </div>
+          <span className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border border-cyan-500/30">
+            Recharts Analytics
+          </span>
+        </div>
+
+        <div className="h-72 w-full pt-2">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={attendanceData}
+              margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+              <XAxis
+                dataKey="day"
+                stroke="#888888"
+                fontSize={12}
+                tickLine={false}
+              />
+              <YAxis stroke="#888888" fontSize={12} tickLine={false} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "#0f172a",
+                  borderRadius: "12px",
+                  borderColor: "#334155",
+                  color: "#fff",
+                  fontSize: "12px",
+                }}
+              />
+              <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "10px" }} />
+              <Bar
+                dataKey="HIIT"
+                name="HIIT & Cardio"
+                fill="#06b6d4"
+                radius={[6, 6, 0, 0]}
+              />
+              <Bar
+                dataKey="Yoga"
+                name="Vinyasa Yoga"
+                fill="#3b82f6"
+                radius={[6, 6, 0, 0]}
+              />
+              <Bar
+                dataKey="Strength"
+                name="Heavy Weight Sculpt"
+                fill="#10b981"
+                radius={[6, 6, 0, 0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* 3. Trainer Profile Details Card */}
       <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-border">
           <div className="flex items-center gap-4">

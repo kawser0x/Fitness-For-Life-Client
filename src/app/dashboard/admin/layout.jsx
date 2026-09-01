@@ -4,58 +4,64 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { 
   FaChartPie, 
-  FaPlus, 
-  FaDumbbell, 
+  FaUsers, 
+  FaUserCheck, 
+  FaListCheck, 
   FaPenToSquare, 
   FaNewspaper,
   FaArrowLeft,
-  FaUserGraduate
+  FaShieldHalved
 } from "react-icons/fa6";
 import { Button } from "@heroui/react/button";
 import { useAuthQuery } from "better-auth/client";
 
-export default function TrainerDashboardLayout({ children }) {
+export default function AdminDashboardLayout({ children }) {
   const pathname = usePathname();
   const { user: authUser } = useAuthQuery();
 
-  const trainer = {
-    name: authUser?.name || "Elena Rostova",
-    email: authUser?.email || "elena.rostova@fitness.com",
-    role: "Trainer",
+  const admin = {
+    name: authUser?.name || "System Admin",
+    email: authUser?.email || "admin@ironpulse.com",
+    role: "Admin",
     avatar: "/assets/logo.png",
   };
 
   const navItems = [
     {
       label: "Overview",
-      href: "/dashboard/trainer",
+      href: "/dashboard/admin",
       icon: FaChartPie,
     },
     {
-      label: "Add Class",
-      href: "/dashboard/trainer/add-class",
-      icon: FaPlus,
+      label: "All Users",
+      href: "/dashboard/admin/users",
+      icon: FaUsers,
     },
     {
-      label: "My Classes",
-      href: "/dashboard/trainer/my-classes",
-      icon: FaDumbbell,
+      label: "Applied Trainers",
+      href: "/dashboard/admin/applied-trainers",
+      icon: FaUserCheck,
+    },
+    {
+      label: "Manage Classes",
+      href: "/dashboard/admin/manage-classes",
+      icon: FaListCheck,
     },
     {
       label: "Add Forum Post",
-      href: "/dashboard/trainer/add-post",
+      href: "/dashboard/admin/add-post",
       icon: FaPenToSquare,
     },
     {
-      label: "My Forum Posts",
-      href: "/dashboard/trainer/my-post",
+      label: "Manage Forum Posts",
+      href: "/dashboard/admin/manage-posts",
       icon: FaNewspaper,
     },
   ];
 
   const isLinkActive = (href) => {
-    if (href === "/dashboard/trainer") {
-      return pathname === "/dashboard/trainer";
+    if (href === "/dashboard/admin") {
+      return pathname === "/dashboard/admin";
     }
     return pathname.startsWith(href);
   };
@@ -64,18 +70,18 @@ export default function TrainerDashboardLayout({ children }) {
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
       {/* Sidebar - Desktop */}
       <aside className="hidden md:flex flex-col w-64 border-r border-border bg-card/60 backdrop-blur-md p-4 space-y-6 shrink-0">
-        {/* Trainer Mini Profile Card - Blue & Cyan Theme */}
+        {/* Admin Mini Profile Card - Blue & Cyan Theme */}
         <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center gap-3">
           <div className="relative w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-400 p-0.5 shrink-0">
             <div className="w-full h-full bg-card rounded-full flex items-center justify-center font-bold text-foreground">
-              {trainer.name.charAt(0)}
+              {admin.name.charAt(0)}
             </div>
           </div>
           <div className="overflow-hidden text-ellipsis">
-            <p className="text-sm font-semibold truncate text-foreground">{trainer.name}</p>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-500/20 text-blue-600 dark:text-cyan-400">
-              <FaUserGraduate className="h-2.5 w-2.5" />
-              {trainer.role} Badge
+            <p className="text-sm font-semibold truncate text-foreground">{admin.name}</p>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-cyan-500/20 text-cyan-600 dark:text-cyan-400">
+              <FaShieldHalved className="h-2.5 w-2.5" />
+              {admin.role} Badge
             </span>
           </div>
         </div>

@@ -8,6 +8,15 @@ import logo from "../../../public/assets/logo.png";
 import Theme from "./Theme";
 import { useSession, signOut } from "@/lib/auth-client";
 
+const isValidDirectImageUrl = (url) => {
+  if (!url || typeof url !== "string") return false;
+  // ImgBB viewer webpage links (e.g. https://ibb.co/xxx or https://ibb.co.com/xxx) are HTML, not direct image files (i.ibb.co/xxx)
+  if ((url.includes("ibb.co/") || url.includes("ibb.co.com/")) && !url.includes("i.ibb.co")) {
+    return false;
+  }
+  return url.startsWith("http://") || url.startsWith("https://");
+};
+
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -31,7 +40,7 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Determine Dashboard route based on folder structure
+  // Determine Dashboard route based on user role (Admin, Trainer, Member)
   const getDashboardHref = (role) => {
     switch (role) {
       case "admin":
@@ -43,11 +52,12 @@ const Navbar = () => {
     }
   };
 
-  // Base navigation items (Dashboard only shown if user is logged in via profile dropdown)
+  // Base navigation items (Dashboard dynamically added when user is logged in)
   const navItems = [
     { label: "Home", href: "/" },
     { label: "All Classes", href: "/classes" },
     { label: "Community Forum", href: "/forum" },
+    ...(user ? [{ label: "Dashboard", href: getDashboardHref(userRole) }] : []),
   ];
 
   const isLinkActive = (href) => {
@@ -66,6 +76,9 @@ const Navbar = () => {
       },
     });
   };
+
+  const hasValidAvatar = user?.image && isValidDirectImageUrl(user.image) && !imageError;
+  const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : "U";
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-divider bg-background/80 backdrop-blur-md">
@@ -123,10 +136,10 @@ const Navbar = () => {
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="flex items-center gap-2.5 rounded-full py-1 pl-1 pr-2 transition-all hover:bg-default-100 focus:outline-none">
                 <div className="relative h-8 w-8 overflow-hidden rounded-full ring-2 ring-cyan-500/40 bg-cyan-600 flex items-center justify-center shrink-0">
-                  {user.image && !imageError ? (
+                  {hasValidAvatar ? (
                     <Image
                       src={user.image}
-                      alt={user.name || "User Avatar"}
+                      alt=""
                       fill
                       sizes="32px"
                       unoptimized
@@ -135,7 +148,7 @@ const Navbar = () => {
                     />
                   ) : (
                     <span className="text-xs font-bold text-white uppercase">
-                      {user.name ? user.name.charAt(0) : "U"}
+                      {userInitial}
                     </span>
                   )}
                 </div>
@@ -243,10 +256,10 @@ const Navbar = () => {
           {user && (
             <div className="flex items-center gap-3 pb-3 mb-2 border-b border-divider">
               <div className="relative h-10 w-10 overflow-hidden rounded-full ring-2 ring-cyan-500/40 bg-cyan-600 flex items-center justify-center shrink-0">
-                {user.image && !imageError ? (
+                {hasValidAvatar ? (
                   <Image
                     src={user.image}
-                    alt={user.name || "User Avatar"}
+                    alt=""
                     fill
                     sizes="40px"
                     unoptimized
@@ -255,7 +268,7 @@ const Navbar = () => {
                   />
                 ) : (
                   <span className="text-sm font-bold text-white uppercase">
-                    {user.name ? user.name.charAt(0) : "U"}
+                    {userInitial}
                   </span>
                 )}
               </div>
@@ -289,17 +302,6 @@ const Navbar = () => {
                 </li>
               );
             })}
-
-            {user && (
-              <li>
-                <Link
-                  href={getDashboardHref(userRole)}
-                  onClick={() => setIsMenuOpen(false)}
-                  className="block rounded-lg px-3 py-2 text-sm font-medium text-foreground-700 hover:bg-default-100">
-                  Dashboard
-                </Link>
-              </li>
-            )}
 
             <li className="mt-3 border-t border-divider pt-3">
               {user ? (

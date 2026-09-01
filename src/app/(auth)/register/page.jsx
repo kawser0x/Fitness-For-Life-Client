@@ -30,18 +30,26 @@ export default function RegisterPage() {
     email: "",
     image: "",
     password: "",
-    role: "user", // Default role: 'user' or 'trainer'
+    role: "user", // Default selection: 'user' or 'trainer'
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
   // Password Rules Validation Logic
   const hasMinLength = formData.password.length >= 6;
   const hasUppercase = /[A-Z]/.test(formData.password);
   const hasLowercase = /[a-z]/.test(formData.password);
   const isPasswordValid = hasMinLength && hasUppercase && hasLowercase;
+
+  // Check if image URL is an ImgBB viewer webpage link (e.g. ibb.co.com/xxx or ibb.co/xxx)
+  const isImgBBPageUrl =
+    formData.image &&
+    (formData.image.includes("ibb.co/") || formData.image.includes("ibb.co.com/")) &&
+    !formData.image.includes("i.ibb.co");
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -65,11 +73,18 @@ export default function RegisterPage() {
       return;
     }
 
+    if (isImgBBPageUrl) {
+      setErrorMsg(
+        "You entered an ImgBB viewer webpage link (ibb.co.com/xxx). Please use a direct image URL (e.g. https://i.ibb.co.com/.../image.jpg) or leave blank for a default avatar."
+      );
+      return;
+    }
+
     setLoading(true);
     setErrorMsg("");
 
     try {
-      // Better Auth Email Sign-Up Integration with custom Role
+      // 1. Better Auth Sign-Up
       const res = await signUp.email({
         email: formData.email,
         password: formData.password,
@@ -83,27 +98,24 @@ export default function RegisterPage() {
       if (res?.error) {
         setErrorMsg(res.error.message || "Registration failed.");
       } else {
-        // Issue JWT token on backend
+        // 2. Explicit Backend Sync for Role Persistence
         try {
-          await fetch(
-            `${process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:5000"}/api/auth/jwt-token`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                email: formData.email,
-                name: formData.name,
-                image: formData.image,
-                role: formData.role,
-              }),
-            },
-          );
-        } catch (tokenErr) {
-          console.error("JWT token error:", tokenErr);
+          await fetch(`${API_URL}/api/user/sync`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: formData.email,
+              name: formData.name,
+              image: formData.image,
+              role: formData.role,
+            }),
+          });
+        } catch (syncErr) {
+          console.error("User role sync error:", syncErr);
         }
 
         setSuccessMsg(
-          `Account registered as ${formData.role === "trainer" ? "Trainer" : "User"}! Redirecting to login...`,
+          `Account registered as ${formData.role === "trainer" ? "Trainer" : "User"}! Redirecting to login...`
         );
         setTimeout(() => {
           router.push("/login");
@@ -122,7 +134,7 @@ export default function RegisterPage() {
     try {
       await signIn.social({
         provider: "google",
-        callbackURL: redirectTo,
+        callbackURL: "/",
         newUserCallbackURL: "/",
         additionalData: {
           role: "user",
@@ -173,7 +185,7 @@ export default function RegisterPage() {
           <form onSubmit={handleRegister} className="space-y-4">
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                Select Your Role
+                Select Your Account Role
               </label>
               <div className="grid grid-cols-2 gap-3 pt-0.5">
                 <button
@@ -244,7 +256,7 @@ export default function RegisterPage() {
 
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                Profile Image URL (Optional)
+                Profile Direct Image URL (Optional)
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -255,10 +267,24 @@ export default function RegisterPage() {
                   name="image"
                   value={formData.image}
                   onChange={handleChange}
-                  placeholder="https://example.com/avatar.jpg"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all"
+                  placeholder="https://i.ibb.co.com/example/avatar.jpg"
+                  className={`w-full pl-10 pr-4 py-3 rounded-xl border ${
+                    isImgBBPageUrl
+                      ? "border-amber-500 bg-amber-500/5"
+                      : "border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
+                  } text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all`}
                 />
               </div>
+
+              {isImgBBPageUrl ? (
+                <p className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold leading-tight pt-1">
+                  ⚠️ Note: ImgBB webpage viewer links (e.g. ibb.co.com/xxx) are HTML pages. Right-click the image and select "Copy Image Address" to get direct link (e.g. https://i.ibb.co.com/xxx.jpg).
+                </p>
+              ) : (
+                <p className="text-[11px] text-slate-400 font-medium pt-0.5">
+                  Direct image link required (e.g. ending in .jpg, .png or starting with https://i.ibb.co...).
+                </p>
+              )}
             </div>
 
             <div className="space-y-1.5">

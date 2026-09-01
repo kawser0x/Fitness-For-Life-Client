@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { 
@@ -11,19 +12,24 @@ import {
   FaArrowLeft,
   FaUserGraduate
 } from "react-icons/fa6";
-import { Button } from "@heroui/react/button";
-import { useAuthQuery } from "better-auth/client";
+import { useSession } from "@/lib/auth-client";
 
 export default function TrainerDashboardLayout({ children }) {
   const pathname = usePathname();
-  const { user: authUser } = useAuthQuery();
+  const { data: session } = useSession();
+  const user = session?.user;
 
-  const trainer = {
-    name: authUser?.name || "Elena Rostova",
-    email: authUser?.email || "elena.rostova@fitness.com",
-    role: "Trainer",
-    avatar: "/assets/logo.png",
-  };
+  // Hydration guard to prevent SSR/Client mismatches
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const displayName = mounted
+    ? user?.name || user?.email?.split("@")[0] || "Trainer"
+    : "Trainer";
+  const userRole = mounted ? user?.role || "trainer" : "trainer";
+  const firstLetter = displayName.charAt(0).toUpperCase();
 
   const navItems = [
     {
@@ -64,18 +70,18 @@ export default function TrainerDashboardLayout({ children }) {
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
       {/* Sidebar - Desktop */}
       <aside className="hidden md:flex flex-col w-64 border-r border-border bg-card/60 backdrop-blur-md p-4 space-y-6 shrink-0">
-        {/* Trainer Mini Profile Card - Blue & Cyan Theme */}
+        {/* Trainer Dynamic Mini Profile Card */}
         <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center gap-3">
           <div className="relative w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-400 p-0.5 shrink-0">
-            <div className="w-full h-full bg-card rounded-full flex items-center justify-center font-bold text-foreground">
-              {trainer.name.charAt(0)}
+            <div className="w-full h-full bg-card rounded-full flex items-center justify-center font-bold text-foreground uppercase">
+              {firstLetter}
             </div>
           </div>
           <div className="overflow-hidden text-ellipsis">
-            <p className="text-sm font-semibold truncate text-foreground">{trainer.name}</p>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-500/20 text-blue-600 dark:text-cyan-400">
+            <p className="text-sm font-semibold truncate text-foreground">{displayName}</p>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-500/20 text-blue-600 dark:text-cyan-400 uppercase">
               <FaUserGraduate className="h-2.5 w-2.5" />
-              {trainer.role} Badge
+              {userRole} Badge
             </span>
           </div>
         </div>
@@ -104,16 +110,12 @@ export default function TrainerDashboardLayout({ children }) {
 
         {/* Footer Actions */}
         <div className="pt-4 border-t border-border space-y-2">
-          <Button
-            as={Link}
+          <Link
             href="/"
-            variant="flat"
-            size="sm"
-            className="w-full justify-start text-xs font-medium text-muted-foreground hover:text-foreground"
-            startContent={<FaArrowLeft className="h-3.5 w-3.5" />}
-          >
-            Back to Public Site
-          </Button>
+            className="w-full inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition">
+            <FaArrowLeft className="h-3.5 w-3.5" />
+            <span>Back to Public Site</span>
+          </Link>
         </div>
       </aside>
 

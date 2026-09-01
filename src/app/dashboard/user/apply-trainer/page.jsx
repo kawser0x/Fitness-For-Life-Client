@@ -11,30 +11,59 @@ import {
   FaCircleInfo,
 } from "react-icons/fa6";
 import { Button } from "@heroui/react/button";
+import { useSession } from "@/lib/auth-client";
 
 export default function ApplyTrainerPage() {
+  const { data: session } = useSession();
+  const user = session?.user;
+
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState("Pending"); // "Not Submitted" | "Pending" | "Rejected" | "Approved"
+  const [status, setStatus] = useState("Pending");
 
   // Form Fields
   const [formData, setFormData] = useState({
     experience: "3",
     specialty: "HIIT & Cardio",
     timeSlots: "Morning (07:00 AM - 11:00 AM)",
-    bio: "Certified fitness instructor with 3 years of group training experience focused on fat loss and endurance build.",
+    bio: "Certified fitness instructor with group training experience focused on strength, fat loss, and endurance build.",
   });
 
-  const handleSubmit = (e) => {
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!user) {
+      toast.error("Please login to submit a trainer application!");
+      return;
+    }
+
     setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const res = await fetch(`${API_URL}/api/trainer/apply`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userEmail: user.email,
+          userName: user.name || user.email.split("@")[0] || "Applicant",
+          experience: `${formData.experience} Years`,
+          specialty: formData.specialty,
+          availableTime: formData.timeSlots,
+          bio: formData.bio,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to submit application");
+
       setStatus("Pending");
-      toast.success(
-        "Trainer application submitted successfully! Status set to Pending.",
-      );
-    }, 1200);
+      toast.success("Trainer application submitted successfully! Status set to Pending.");
+    } catch (error) {
+      console.error("Error submitting trainer application:", error);
+      toast.error(error.message || "Failed to submit application");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -43,11 +72,10 @@ export default function ApplyTrainerPage() {
       <div>
         <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
           <FaUserGraduate className="h-6 w-6 text-cyan-500" />
-          Apply as Trainer
+          Apply as Certified Trainer
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Become a certified trainer on FitnessForLife to list your classes,
-          track attendees, and share insights on the community forum.
+          Become a certified trainer on FitnessForLife to list your classes, track enrolled attendees, and share insights on the community forum.
         </p>
       </div>
 
@@ -60,17 +88,31 @@ export default function ApplyTrainerPage() {
               Application Status: Pending Review
             </h4>
             <p className="text-xs text-amber-800 dark:text-amber-200 leading-relaxed">
-              Your application has been submitted and is currently being
-              evaluated by the Admin team. You will receive an update once
-              approved.
+              Your application has been submitted and is currently being evaluated by the Admin team. You will receive an update once reviewed.
             </p>
           </div>
         </div>
       )}
 
       {/* Application Form */}
-      <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
+      <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Applicant Header Info */}
+          <div className="p-4 rounded-2xl bg-accent/30 border border-border flex items-center justify-between text-xs">
+            <div>
+              <span className="text-muted-foreground block">Applicant Name</span>
+              <span className="font-bold text-foreground text-sm">
+                {user?.name || user?.email?.split("@")[0] || "Member"}
+              </span>
+            </div>
+            <div className="text-right">
+              <span className="text-muted-foreground block">Applicant Email</span>
+              <span className="font-bold text-cyan-600 dark:text-cyan-400">
+                {user?.email || "user@example.com"}
+              </span>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {/* Experience in Years */}
             <div className="space-y-2">
@@ -157,7 +199,7 @@ export default function ApplyTrainerPage() {
               type="submit"
               isLoading={loading}
               size="lg"
-              className="bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold shadow-md hover:from-blue-700 hover:to-cyan-600"
+              className="bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold shadow-md hover:from-blue-700 hover:to-cyan-600 px-8 rounded-2xl"
               startContent={!loading && <FaPaperPlane className="h-4 w-4" />}>
               {loading ? "Submitting..." : "Submit Application"}
             </Button>

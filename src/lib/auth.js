@@ -10,6 +10,39 @@ export const auth = betterAuth({
   database: mongodbAdapter(db, {
     client,
   }),
+  user: {
+    additionalFields: {
+      role: {
+        type: "string",
+        defaultValue: "user",
+        required: false,
+      },
+      status: {
+        type: "string",
+        defaultValue: "active",
+        required: false,
+      },
+    },
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        before: async (user) => {
+          let role = user.role || "user";
+          if (user.email?.toLowerCase() === "admin@ironpulse.com") {
+            role = "admin";
+          }
+          return {
+            data: {
+              ...user,
+              role,
+              status: user.status || "active",
+            },
+          };
+        },
+      },
+    },
+  },
   emailAndPassword: {
     enabled: true,
   },

@@ -19,7 +19,7 @@ import Image from "next/image";
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect") || "/";
+  const redirectParam = searchParams.get("redirect");
 
   const [formData, setFormData] = useState({
     email: "",
@@ -30,9 +30,22 @@ function LoginForm() {
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     setErrorMsg("");
+  };
+
+  const getRoleDashboard = (userObj) => {
+    const role = userObj?.role || "user";
+    if (userObj?.email?.toLowerCase() === "admin@ironpulse.com" || role === "admin") {
+      return "/dashboard/admin";
+    }
+    if (role === "trainer") {
+      return "/dashboard/trainer";
+    }
+    return "/dashboard/user";
   };
 
   const handleCredentialLogin = async (e) => {
@@ -54,10 +67,35 @@ function LoginForm() {
       if (res?.error) {
         setErrorMsg(res.error.message || "Invalid email or password.");
       } else {
-        setSuccessMsg("Logged in successfully! Redirecting...");
+        setSuccessMsg("Logged in successfully! Redirecting to your dashboard...");
+
+        let targetRoute = redirectParam;
+        if (!targetRoute) {
+          try {
+            // Query database directly for saved user role
+            const roleRes = await fetch(`${API_URL}/api/user/role/${encodeURIComponent(formData.email)}`);
+            if (roleRes.ok) {
+              const roleData = await roleRes.json();
+              if (roleData.role === "admin" || formData.email.toLowerCase() === "admin@ironpulse.com") {
+                targetRoute = "/dashboard/admin";
+              } else if (roleData.role === "trainer") {
+                targetRoute = "/dashboard/trainer";
+              } else {
+                targetRoute = "/dashboard/user";
+              }
+            }
+          } catch (roleErr) {
+            console.error("Role fetch error during login:", roleErr);
+          }
+        }
+
+        if (!targetRoute) {
+          targetRoute = getRoleDashboard(res?.data?.user);
+        }
+
         setTimeout(() => {
-          router.push(redirectTo);
-        }, 1000);
+          router.push(targetRoute);
+        }, 800);
       }
     } catch (err) {
       console.error("Login Error:", err);
@@ -72,8 +110,8 @@ function LoginForm() {
     try {
       await signIn.social({
         provider: "google",
-        callbackURL: redirectTo,
-        newUserCallbackURL: "/",
+        callbackURL: redirectParam || "/dashboard/user",
+        newUserCallbackURL: "/dashboard/user",
         additionalData: {
           role: "user",
         },
@@ -230,7 +268,7 @@ function LoginForm() {
       </button>
 
       <div className="text-center text-xs text-slate-500 dark:text-slate-400">
-        Don't have an account?
+        Don't have an account?{" "}
         <Link
           href="/register"
           className="font-bold text-emerald-600 hover:underline">

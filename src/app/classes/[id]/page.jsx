@@ -39,6 +39,7 @@ export default function ClassDetailsPage({ params }) {
   const [loading, setLoading] = useState(true);
   const [isBooked, setIsBooked] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -74,25 +75,77 @@ export default function ClassDetailsPage({ params }) {
     }
   }, [API_URL, classId]);
 
+  // Check if class is already booked or saved in favorites by user
+  const checkUserRelations = useCallback(async () => {
+    if (!user?.email || !classId) return;
+    try {
+      // Check favorites
+      const favRes = await fetch(`${API_URL}/api/user/favorites/${encodeURIComponent(user.email)}`);
+      if (favRes.ok) {
+        const favs = await favRes.json();
+        const found = favs.some((f) => f.classId === classId);
+        setIsFavorite(found);
+      }
+
+      // Check bookings
+      const bookRes = await fetch(`${API_URL}/api/user/bookings/${encodeURIComponent(user.email)}`);
+      if (bookRes.ok) {
+        const books = await bookRes.json();
+        const foundBook = books.some((b) => b.classId === classId);
+        setIsBooked(foundBook);
+      }
+    } catch (err) {
+      console.error("Error checking user relations:", err);
+    }
+  }, [API_URL, classId, user?.email]);
+
   useEffect(() => {
     if (classId) {
       fetchClassDetails();
     }
   }, [classId, fetchClassDetails]);
 
-  // Handle Add / Remove Favorite Toggle
-  const handleFavoriteToggle = () => {
-    if (!user) {
+  useEffect(() => {
+    if (user?.email && classId) {
+      checkUserRelations();
+    }
+  }, [user?.email, classId, checkUserRelations]);
+
+  // Handle Add / Remove Favorite Toggle connected to Backend MongoDB
+  const handleFavoriteToggle = async () => {
+    if (!user?.email) {
       toast.error("Please login to save favorite classes!");
       return;
     }
+    if (!classData) return;
 
-    const nextState = !isFavorite;
-    setIsFavorite(nextState);
-    if (nextState) {
-      toast.success(`"${classData?.className}" added to your favorites!`);
-    } else {
-      toast.info(`"${classData?.className}" removed from favorites.`);
+    try {
+      setFavoriteLoading(true);
+      const res = await fetch(`${API_URL}/api/user/favorites/toggle`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userEmail: user.email,
+          classId: classData._id,
+          className: classData.className,
+          image: classData.image,
+          category: classData.category,
+          price: classData.price,
+          duration: classData.duration,
+          difficultyLevel: classData.difficultyLevel,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update favorite");
+
+      setIsFavorite(data.isFavorite);
+      toast.success(data.message);
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+      toast.error("Failed to update favorites");
+    } finally {
+      setFavoriteLoading(false);
     }
   };
 
@@ -149,9 +202,7 @@ export default function ClassDetailsPage({ params }) {
 
         {/* 2-GRID LAYOUT */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-          {/* ======================================================== */}
-          {/* GRID 1 (SPANS 2 COLS): FULL CLASS DETAILS CARD           */}
-          {/* ======================================================== */}
+          {/* GRID 1: FULL CLASS DETAILS CARD */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -178,9 +229,16 @@ export default function ClassDetailsPage({ params }) {
 
                 <button
                   type="button"
+                  disabled={favoriteLoading}
                   onClick={handleFavoriteToggle}
-                  className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-md border border-white/20 flex items-center justify-center text-rose-500 hover:scale-110 transition shadow-lg">
-                  {isFavorite ? <FaHeart className="h-5 w-5" /> : <FaRegHeart className="h-5 w-5 text-white" />}
+                  className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-md border border-white/20 flex items-center justify-center text-rose-500 hover:scale-110 transition shadow-lg disabled:opacity-50">
+                  {favoriteLoading ? (
+                    <FaSpinner className="h-4 w-4 animate-spin text-white" />
+                  ) : isFavorite ? (
+                    <FaHeart className="h-5 w-5" />
+                  ) : (
+                    <FaRegHeart className="h-5 w-5 text-white" />
+                  )}
                 </button>
               </div>
 
@@ -262,9 +320,7 @@ export default function ClassDetailsPage({ params }) {
             </div>
           </motion.div>
 
-          {/* ======================================================== */}
-          {/* GRID 2 (SPANS 1 COL): BOOK NOW CARD (FRAMER MOTION)      */}
-          {/* ======================================================== */}
+          {/* GRID 2: BOOK NOW CARD (FRAMER MOTION) */}
           <motion.div
             initial={{ opacity: 0, y: 30, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -338,9 +394,12 @@ export default function ClassDetailsPage({ params }) {
               {/* Secondary Favorite Button */}
               <button
                 type="button"
+                disabled={favoriteLoading}
                 onClick={handleFavoriteToggle}
-                className="w-full py-2.5 rounded-xl border border-border text-xs font-bold text-foreground hover:bg-accent/40 transition flex items-center justify-center gap-2">
-                {isFavorite ? (
+                className="w-full py-2.5 rounded-xl border border-border text-xs font-bold text-foreground hover:bg-accent/40 transition flex items-center justify-center gap-2 disabled:opacity-50">
+                {favoriteLoading ? (
+                  <FaSpinner className="h-3.5 w-3.5 animate-spin text-cyan-500" />
+                ) : isFavorite ? (
                   <>
                     <FaHeart className="h-3.5 w-3.5 text-rose-500" />
                     Saved in Favorites

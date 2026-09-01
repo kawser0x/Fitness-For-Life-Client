@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -10,16 +11,24 @@ import {
   FaArrowLeft,
 } from "react-icons/fa6";
 import { Button } from "@heroui/react/button";
+import { useSession } from "@/lib/auth-client";
 
 export default function UserDashboardLayout({ children }) {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const user = session?.user;
 
-  const user = {
-    name: "Alex Johnson",
-    email: "alex.johnson@example.com",
-    role: "User",
-    avatar: "/assets/logo.png",
-  };
+  // Hydration safety check to prevent SSR/Client mismatches
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const displayName = mounted
+    ? user?.name || user?.email?.split("@")[0] || "User"
+    : "User";
+  const userRole = mounted ? user?.role || "user" : "user";
+  const firstLetter = displayName.charAt(0).toUpperCase();
 
   const navItems = [
     {
@@ -56,24 +65,26 @@ export default function UserDashboardLayout({ children }) {
 
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
+      {/* Sidebar - Desktop */}
       <aside className="hidden md:flex flex-col w-64 border-r border-border bg-card/60 backdrop-blur-md p-4 space-y-6 shrink-0">
-      
+        {/* Dynamic User Profile Card */}
         <div className="p-3 rounded-xl bg-accent/50 border border-border flex items-center gap-3">
           <div className="relative w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-400 p-0.5 shrink-0">
-            <div className="w-full h-full bg-card rounded-full flex items-center justify-center font-bold text-foreground">
-              {user.name.charAt(0)}
+            <div className="w-full h-full bg-card rounded-full flex items-center justify-center font-bold text-foreground uppercase">
+              {firstLetter}
             </div>
           </div>
           <div className="overflow-hidden text-ellipsis">
             <p className="text-sm font-semibold truncate text-foreground">
-              {user.name}
+              {displayName}
             </p>
-            <span className="inline-block px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-500/10 text-blue-600 dark:text-cyan-400">
-              {user.role} Dashboard
+            <span className="inline-block px-2 py-0.5 text-[10px] font-bold rounded-full bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 uppercase">
+              {userRole} Dashboard
             </span>
           </div>
         </div>
 
+        {/* Sidebar Nav */}
         <nav className="flex-1 space-y-1.5">
           {navItems.map((item) => {
             const Icon = item.icon;

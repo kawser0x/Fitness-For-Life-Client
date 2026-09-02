@@ -13,7 +13,7 @@ import { Button } from "@heroui/react/button";
 import ImgBBUpload from "@/components/shared/ImgBBUpload";
 import { useSession } from "@/lib/auth-client";
 
-export default function AddForumPostPage() {
+export default function TrainerAddForumPostPage() {
   const router = useRouter();
   const { data: session } = useSession();
   const user = session?.user;
@@ -40,7 +40,6 @@ export default function AddForumPostPage() {
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-      // If image is empty or invalid, fallback to default high quality image
       const finalImage =
         formData.image && formData.image.trim()
           ? formData.image.trim()
@@ -53,8 +52,8 @@ export default function AddForumPostPage() {
           title: formData.title,
           image: finalImage,
           description: formData.description,
-          authorEmail: user?.email || "elena.rostova@fitness.com",
-          authorName: user?.name || "Elena Rostova",
+          authorEmail: user?.email,
+          authorName: user?.name || user?.email?.split("@")[0] || "Trainer",
           authorRole: "Trainer",
         }),
       });
@@ -68,11 +67,10 @@ export default function AddForumPostPage() {
       toast.success("Community Forum post published successfully!");
       setFormData({ title: "", image: "", description: "" });
 
-      // Automatically navigate to My Forum Posts page to view newly created post
       router.push("/dashboard/trainer/my-post");
     } catch (error) {
       console.error("Error publishing forum post:", error);
-      toast.error(error.message || "Failed to publish post. Ensure backend server is running.");
+      toast.error(error.message || "Failed to publish post.");
     } finally {
       setLoading(false);
     }
@@ -80,26 +78,22 @@ export default function AddForumPostPage() {
 
   return (
     <div className="space-y-6 max-w-3xl">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
           <FaPenToSquare className="h-5 w-5 text-cyan-500" />
           Add Forum Post
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Share fitness guides, nutrition tips, and training advice on the
-          public Community Forum using ImgBB image hosting.
+          Share workout guides, nutrition advice, and fitness tips with the Fitness For Life community using ImgBB image upload.
         </p>
       </div>
 
-      {/* Form */}
       <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Post Title */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
               <FaHeading className="h-3.5 w-3.5 text-cyan-500" />
-              Post Title
+              Article Title
             </label>
             <input
               type="text"
@@ -108,12 +102,11 @@ export default function AddForumPostPage() {
               onChange={(e) =>
                 setFormData({ ...formData, title: e.target.value })
               }
-              placeholder="e.g. 5 Science-Backed Nutrition Habits for Faster Recovery"
+              placeholder="e.g. 5 Core Exercises to Build Functional Strength & Endurance"
               className="w-full px-4 py-2.5 rounded-xl border border-border text-foreground text-sm focus:outline-none focus:border-cyan-500 transition"
             />
           </div>
 
-          {/* Featured Image - ImgBB Upload */}
           <ImgBBUpload
             value={formData.image}
             onChange={(url) => setFormData({ ...formData, image: url })}
@@ -121,11 +114,10 @@ export default function AddForumPostPage() {
             required={false}
           />
 
-          {/* Description / Content */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
               <FaCircleInfo className="h-3.5 w-3.5 text-cyan-500" />
-              Post Description / Article Content
+              Article Content / Description
             </label>
             <textarea
               rows={6}
@@ -134,12 +126,11 @@ export default function AddForumPostPage() {
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
               }
-              placeholder="Write your article details, training recommendations, or community advice..."
+              placeholder="Write your article details, training tips, and guidance..."
               className="w-full px-4 py-2.5 rounded-xl border border-border text-foreground text-sm focus:outline-none focus:border-cyan-500 transition leading-relaxed"
             />
           </div>
 
-          {/* Submit Button */}
           <div className="pt-2 flex justify-end">
             <Button
               type="submit"

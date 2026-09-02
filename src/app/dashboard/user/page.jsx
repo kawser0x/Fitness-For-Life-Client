@@ -36,7 +36,7 @@ export default function UserOverviewPage() {
   });
   const [loading, setLoading] = useState(true);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   // Fetch Real User Statistics from Backend MongoDB
   const fetchUserStats = useCallback(async () => {
@@ -66,7 +66,7 @@ export default function UserOverviewPage() {
   const userName = mounted
     ? user?.name || user?.email?.split("@")[0] || "Member"
     : "Member";
-  const userEmail = mounted ? user?.email || "user@example.com" : "user@example.com";
+  const userEmail = mounted ? user?.email  : "user@example.com";
   const userRole = mounted ? user?.role || "user" : "user";
   const firstLetter = userName ? userName.charAt(0).toUpperCase() : "U";
   const hasCustomImage =
@@ -82,7 +82,6 @@ export default function UserOverviewPage() {
 
   return (
     <div className="space-y-8">
-      {/* Page Title & Welcome Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-blue-600/10 via-cyan-500/10 to-transparent p-6 rounded-3xl border border-blue-500/20">
         <div>
           <h1 className="text-2xl font-extrabold text-foreground flex items-center gap-2">

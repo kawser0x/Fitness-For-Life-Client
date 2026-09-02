@@ -84,7 +84,7 @@ export default function RegisterPage() {
     setErrorMsg("");
 
     try {
-      // 1. Better Auth Sign-Up
+      // 1. Better Auth Sign-Up with standard payload
       const res = await signUp.email({
         email: formData.email,
         password: formData.password,
@@ -92,13 +92,12 @@ export default function RegisterPage() {
         image:
           formData.image ||
           "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-        role: formData.role,
       });
 
       if (res?.error) {
         setErrorMsg(res.error.message || "Registration failed.");
       } else {
-        // 2. Explicit Backend Sync for Role Persistence
+        // 2. Sync user role to MongoDB backend
         try {
           await fetch(`${API_URL}/api/user/sync`, {
             method: "POST",
@@ -123,7 +122,7 @@ export default function RegisterPage() {
       }
     } catch (err) {
       console.error("Register Error:", err);
-      setErrorMsg("Registration failed. Please try again.");
+      setErrorMsg(err.message || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -136,9 +135,6 @@ export default function RegisterPage() {
         provider: "google",
         callbackURL: "/",
         newUserCallbackURL: "/",
-        additionalData: {
-          role: "user",
-        },
       });
     } catch (err) {
       console.error("Google Auth Error:", err);

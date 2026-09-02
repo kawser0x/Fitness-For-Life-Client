@@ -8,14 +8,12 @@ import {
   FaCalendarDays,
   FaUserGraduate,
   FaArrowRight,
-  FaChevronLeft,
-  FaChevronRight,
   FaSpinner,
   FaShieldHalved,
   FaThumbsUp,
   FaThumbsDown,
 } from "react-icons/fa6";
-import { Button } from "@heroui/react/button";
+import PaginationWithEllipsis from "@/components/shared/PaginationWithEllipsis";
 
 export default function ForumPage() {
   const [posts, setPosts] = useState([]);
@@ -155,32 +153,12 @@ export default function ForumPage() {
           </div>
         )}
 
-        {/* Server-Side Pagination Controls */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-3 pt-6">
-            <Button
-              size="sm"
-              variant="flat"
-              disabled={page === 1}
-              onClick={() => setPage((p) => Math.max(p - 1, 1))}
-              startContent={<FaChevronLeft className="h-3 w-3" />}>
-              Previous
-            </Button>
-
-            <span className="text-xs font-bold text-muted-foreground px-3">
-              Page {page} of {totalPages} ({totalPosts} total articles)
-            </span>
-
-            <Button
-              size="sm"
-              variant="flat"
-              disabled={page >= totalPages}
-              onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-              endContent={<FaChevronRight className="h-3 w-3" />}>
-              Next
-            </Button>
-          </div>
-        )}
+        {/* PAGINATION WITH ELLIPSIS */}
+        <PaginationWithEllipsis
+          page={page}
+          totalPages={totalPages}
+          onPageChange={(newPage) => setPage(newPage)}
+        />
       </div>
     </div>
   );

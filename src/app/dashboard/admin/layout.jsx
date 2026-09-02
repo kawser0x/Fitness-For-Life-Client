@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { 
@@ -12,19 +13,24 @@ import {
   FaArrowLeft,
   FaShieldHalved
 } from "react-icons/fa6";
-import { Button } from "@heroui/react/button";
-import { useAuthQuery } from "better-auth/client";
+import { useSession } from "@/lib/auth-client";
 
 export default function AdminDashboardLayout({ children }) {
   const pathname = usePathname();
-  const { user: authUser } = useAuthQuery();
+  const { data: session } = useSession();
+  const user = session?.user;
 
-  const admin = {
-    name: authUser?.name || "System Admin",
-    email: authUser?.email || "admin@ironpulse.com",
-    role: "Admin",
-    avatar: "/assets/logo.png",
-  };
+  // Hydration safety check to prevent SSR/Client mismatches
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const displayName = mounted
+    ? user?.name || user?.email?.split("@")[0] || "Admin"
+    : "Admin";
+  const userRole = mounted ? user?.role || "admin" : "admin";
+  const firstLetter = displayName.charAt(0).toUpperCase();
 
   const navItems = [
     {
@@ -70,18 +76,18 @@ export default function AdminDashboardLayout({ children }) {
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
       {/* Sidebar - Desktop */}
       <aside className="hidden md:flex flex-col w-64 border-r border-border bg-card/60 backdrop-blur-md p-4 space-y-6 shrink-0">
-        {/* Admin Mini Profile Card - Blue & Cyan Theme */}
+        {/* Admin Mini Profile Card */}
         <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center gap-3">
           <div className="relative w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-400 p-0.5 shrink-0">
-            <div className="w-full h-full bg-card rounded-full flex items-center justify-center font-bold text-foreground">
-              {admin.name.charAt(0)}
+            <div className="w-full h-full bg-card rounded-full flex items-center justify-center font-bold text-foreground uppercase">
+              {firstLetter}
             </div>
           </div>
           <div className="overflow-hidden text-ellipsis">
-            <p className="text-sm font-semibold truncate text-foreground">{admin.name}</p>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-cyan-500/20 text-cyan-600 dark:text-cyan-400">
+            <p className="text-sm font-semibold truncate text-foreground">{displayName}</p>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 uppercase">
               <FaShieldHalved className="h-2.5 w-2.5" />
-              {admin.role} Badge
+              {userRole} Badge
             </span>
           </div>
         </div>
@@ -110,22 +116,18 @@ export default function AdminDashboardLayout({ children }) {
 
         {/* Footer Actions */}
         <div className="pt-4 border-t border-border space-y-2">
-          <Button
-            as={Link}
+          <Link
             href="/"
-            variant="flat"
-            size="sm"
-            className="w-full justify-start text-xs font-medium text-muted-foreground hover:text-foreground"
-            startContent={<FaArrowLeft className="h-3.5 w-3.5" />}
-          >
-            Back to Public Site
-          </Button>
+            className="w-full inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition">
+            <FaArrowLeft className="h-3.5 w-3.5" />
+            <span>Back to Public Site</span>
+          </Link>
         </div>
       </aside>
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Mobile Responsive Navigation - Native Link Button Bar */}
+        {/* Mobile Responsive Navigation */}
         <div className="md:hidden p-3 border-b border-border bg-card/80 backdrop-blur-md">
           <div className="flex items-center gap-2 overflow-x-auto pb-1 touch-pan-x">
             {navItems.map((item) => {

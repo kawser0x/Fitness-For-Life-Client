@@ -54,7 +54,7 @@ export default function TrainerOverviewPage() {
 
   const trainer = {
     name: trainerName,
-    email: trainerEmail || "trainer@fitness.com",
+    email: trainerEmail ,
     role: "Trainer",
     specialty: "HIIT & Strength Specialist",
     experience: "Certified Coach",
@@ -95,7 +95,6 @@ export default function TrainerOverviewPage() {
 
   return (
     <div className="space-y-8">
-      {/* Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-blue-600/10 via-cyan-500/10 to-transparent p-6 rounded-3xl border border-blue-500/20">
         <div>
           <div className="flex items-center gap-2 mb-1">

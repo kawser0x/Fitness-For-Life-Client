@@ -2,47 +2,18 @@ import { betterAuth } from "better-auth";
 import { MongoClient } from "mongodb";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
 
-const client = new MongoClient(process.env.MONGODB_URI);
-const db = client.db("fitness-for-life");
+const uri = process.env.MONGODB_URI;
+
+if (!uri) {
+  throw new Error("Missing MONGODB_URI environment variable");
+}
+
+const client = new MongoClient(uri);
+const db = client.db("fitnessforlife");
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL,
-  database: mongodbAdapter(db, {
-    client,
-  }),
-  user: {
-    additionalFields: {
-      role: {
-        type: "string",
-        defaultValue: "user",
-        required: false,
-      },
-      status: {
-        type: "string",
-        defaultValue: "active",
-        required: false,
-      },
-    },
-  },
-  databaseHooks: {
-    user: {
-      create: {
-        before: async (user) => {
-          let role = user.role || "user";
-          if (user.email?.toLowerCase() === "admin@ironpulse.com") {
-            role = "admin";
-          }
-          return {
-            data: {
-              ...user,
-              role,
-              status: user.status || "active",
-            },
-          };
-        },
-      },
-    },
-  },
+  database: mongodbAdapter(db),
   emailAndPassword: {
     enabled: true,
   },

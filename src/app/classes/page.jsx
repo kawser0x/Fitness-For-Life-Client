@@ -11,12 +11,11 @@ import {
   FaUserGraduate,
   FaSpinner,
   FaArrowRight,
-  FaChevronLeft,
-  FaChevronRight,
   FaXmark,
   FaFilter,
 } from "react-icons/fa6";
 import { Button } from "@heroui/react/button";
+import PaginationWithEllipsis from "@/components/shared/PaginationWithEllipsis";
 
 const CATEGORIES = [
   "All",
@@ -277,32 +276,12 @@ export default function AllClassesPage() {
           </div>
         )}
 
-        {/* SERVER-SIDE PAGINATION BAR */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-4 pt-6">
-            <Button
-              size="sm"
-              disabled={page <= 1}
-              onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-              className="bg-card border border-border text-foreground font-bold disabled:opacity-40"
-              startContent={<FaChevronLeft className="h-3 w-3" />}>
-              Previous
-            </Button>
-
-            <span className="text-xs font-bold text-muted-foreground">
-              Page <span className="text-foreground">{page}</span> of {totalPages}
-            </span>
-
-            <Button
-              size="sm"
-              disabled={page >= totalPages}
-              onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
-              className="bg-card border border-border text-foreground font-bold disabled:opacity-40"
-              endContent={<FaChevronRight className="h-3 w-3" />}>
-              Next
-            </Button>
-          </div>
-        )}
+        {/* PAGINATION WITH ELLIPSIS */}
+        <PaginationWithEllipsis
+          page={page}
+          totalPages={totalPages}
+          onPageChange={(newPage) => setPage(newPage)}
+        />
       </div>
     </div>
   );

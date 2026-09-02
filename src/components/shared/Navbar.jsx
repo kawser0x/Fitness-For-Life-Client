@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
@@ -10,7 +10,6 @@ import { useSession, signOut } from "@/lib/auth-client";
 
 const isValidDirectImageUrl = (url) => {
   if (!url || typeof url !== "string") return false;
-  // ImgBB viewer webpage links (e.g. https://ibb.co/xxx or https://ibb.co.com/xxx) are HTML, not direct image files (i.ibb.co/xxx)
   if ((url.includes("ibb.co/") || url.includes("ibb.co.com/")) && !url.includes("i.ibb.co")) {
     return false;
   }
@@ -21,13 +20,40 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [dbRole, setDbRole] = useState(null);
   const dropdownRef = useRef(null);
   const pathname = usePathname();
 
   // Retrieve authenticated session
   const { data: session, isPending } = useSession();
   const user = session?.user;
-  const userRole = user?.role || "user";
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+  // Fetch live role from backend database to handle dynamic role promotions (e.g. User -> Admin)
+  const fetchLiveRole = useCallback(async () => {
+    if (!user?.email) return;
+    try {
+      const res = await fetch(`${API_URL}/api/user/role/${encodeURIComponent(user.email)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setDbRole(data.role);
+      }
+    } catch (err) {
+      console.error("Error fetching live user role:", err);
+    }
+  }, [API_URL, user?.email]);
+
+  useEffect(() => {
+    if (user?.email) {
+      fetchLiveRole();
+    }
+  }, [user?.email, fetchLiveRole]);
+
+  const userRole =
+    user?.email?.toLowerCase() === "admin@ironpulse.com"
+      ? "admin"
+      : dbRole || user?.role || "user";
 
   // Close profile dropdown when clicking outside
   useEffect(() => {

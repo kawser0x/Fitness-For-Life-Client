@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   FaChartPie,
   FaCalendarCheck,
@@ -15,19 +15,53 @@ import { useSession } from "@/lib/auth-client";
 
 export default function UserDashboardLayout({ children }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { data: session } = useSession();
   const user = session?.user;
 
   // Hydration safety check to prevent SSR/Client mismatches
   const [mounted, setMounted] = useState(false);
+  const [dbRole, setDbRole] = useState(null);
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // Fetch live role from database & auto-redirect Admins and Trainers to their specific dashboards
+  useEffect(() => {
+    if (!user?.email) return;
+
+    const checkRole = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/user/role/${encodeURIComponent(user.email)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setDbRole(data.role);
+
+          if (data.role === "admin" || user.email.toLowerCase() === "admin@ironpulse.com") {
+            router.replace("/dashboard/admin");
+          } else if (data.role === "trainer") {
+            router.replace("/dashboard/trainer");
+          }
+        }
+      } catch (err) {
+        console.error("Error checking role in user layout:", err);
+      }
+    };
+
+    checkRole();
+  }, [API_URL, user?.email, router]);
+
+  const userRole =
+    user?.email?.toLowerCase() === "admin@ironpulse.com"
+      ? "admin"
+      : dbRole || user?.role || "user";
+
   const displayName = mounted
     ? user?.name || user?.email?.split("@")[0] || "User"
     : "User";
-  const userRole = mounted ? user?.role || "user" : "user";
   const firstLetter = displayName.charAt(0).toUpperCase();
 
   const navItems = [

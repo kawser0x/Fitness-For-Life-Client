@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { 
   FaChartPie, 
   FaPlus, 
@@ -10,25 +10,86 @@ import {
   FaPenToSquare, 
   FaNewspaper,
   FaArrowLeft,
-  FaUserGraduate
+  FaUserGraduate,
+  FaLock,
+  FaSpinner
 } from "react-icons/fa6";
 import { useSession } from "@/lib/auth-client";
 
 export default function TrainerDashboardLayout({ children }) {
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const router = useRouter();
+  const { data: session, isPending } = useSession();
   const user = session?.user;
 
-  // Hydration guard to prevent SSR/Client mismatches
   const [mounted, setMounted] = useState(false);
+  const [role, setRole] = useState(null);
+  const [checkingRole, setCheckingRole] = useState(true);
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+  // Verify Role from Backend MongoDB API
+  const verifyRole = useCallback(async () => {
+    if (!user?.email) {
+      setCheckingRole(false);
+      return;
+    }
+    try {
+      setCheckingRole(true);
+      const res = await fetch(`${API_URL}/api/user/role/${encodeURIComponent(user.email)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setRole(data.role || "user");
+        if (data.role !== "trainer" && data.role !== "admin") {
+          console.warn(`Unauthorized access attempt to /dashboard/trainer by ${user.email} with role: ${data.role}`);
+          router.replace("/dashboard/user");
+        }
+      }
+    } catch (err) {
+      console.error("Error verifying trainer role:", err);
+    } finally {
+      setCheckingRole(false);
+    }
+  }, [API_URL, user?.email, router]);
+
   useEffect(() => {
     setMounted(true);
-  }, []);
+    if (!isPending) {
+      if (!user) {
+        router.replace("/login");
+      } else {
+        verifyRole();
+      }
+    }
+  }, [isPending, user, verifyRole, router]);
 
-  const displayName = mounted
-    ? user?.name || user?.email?.split("@")[0] || "Trainer"
-    : "Trainer";
-  const userRole = mounted ? user?.role || "trainer" : "trainer";
+  if (!mounted || isPending || checkingRole) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-3 p-4">
+        <FaSpinner className="h-10 w-10 text-cyan-500 animate-spin" />
+        <p className="text-sm font-semibold text-muted-foreground">
+          Verifying Trainer credentials & security permissions...
+        </p>
+      </div>
+    );
+  }
+
+  // Access Denied Protection Guard
+  if (role !== "trainer" && role !== "admin") {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center space-y-4">
+        <div className="w-16 h-16 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-500 text-2xl">
+          <FaLock />
+        </div>
+        <h1 className="text-2xl font-black text-foreground">Access Denied (403 Unauthorized)</h1>
+        <p className="text-sm text-muted-foreground max-w-md mx-auto">
+          You do not have Certified Trainer credentials. Redirecting you to your member dashboard...
+        </p>
+      </div>
+    );
+  }
+
+  const displayName = user?.name || user?.email?.split("@")[0] || "Trainer";
   const firstLetter = displayName.charAt(0).toUpperCase();
 
   const navItems = [
@@ -70,7 +131,7 @@ export default function TrainerDashboardLayout({ children }) {
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
       {/* Sidebar - Desktop */}
       <aside className="hidden md:flex flex-col w-64 border-r border-border bg-card/60 backdrop-blur-md p-4 space-y-6 shrink-0">
-        {/* Trainer Dynamic Mini Profile Card */}
+        {/* Trainer Profile Card */}
         <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center gap-3">
           <div className="relative w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-400 p-0.5 shrink-0">
             <div className="w-full h-full bg-card rounded-full flex items-center justify-center font-bold text-foreground uppercase">
@@ -81,7 +142,7 @@ export default function TrainerDashboardLayout({ children }) {
             <p className="text-sm font-semibold truncate text-foreground">{displayName}</p>
             <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-500/20 text-blue-600 dark:text-cyan-400 uppercase">
               <FaUserGraduate className="h-2.5 w-2.5" />
-              {userRole} Badge
+              {role?.toUpperCase()} Badge
             </span>
           </div>
         </div>
@@ -121,7 +182,7 @@ export default function TrainerDashboardLayout({ children }) {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Mobile Responsive Navigation - Native Link Button Bar */}
+        {/* Mobile Responsive Navigation */}
         <div className="md:hidden p-3 border-b border-border bg-card/80 backdrop-blur-md">
           <div className="flex items-center gap-2 overflow-x-auto pb-1 touch-pan-x">
             {navItems.map((item) => {

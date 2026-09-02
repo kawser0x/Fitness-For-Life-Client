@@ -42,7 +42,7 @@ export default function TrainerDashboardLayout({ children }) {
         setRole(data.role || "user");
         if (data.role !== "trainer" && data.role !== "admin") {
           console.warn(`Unauthorized access attempt to /dashboard/trainer by ${user.email} with role: ${data.role}`);
-          router.replace("/dashboard/user");
+          router.replace("/unauthorized");
         }
       }
     } catch (err) {
@@ -56,7 +56,7 @@ export default function TrainerDashboardLayout({ children }) {
     setMounted(true);
     if (!isPending) {
       if (!user) {
-        router.replace("/login");
+        router.replace("/unauthorized");
       } else {
         verifyRole();
       }
@@ -83,7 +83,7 @@ export default function TrainerDashboardLayout({ children }) {
         </div>
         <h1 className="text-2xl font-black text-foreground">Access Denied (403 Unauthorized)</h1>
         <p className="text-sm text-muted-foreground max-w-md mx-auto">
-          You do not have Certified Trainer credentials. Redirecting you to your member dashboard...
+          You do not have Certified Trainer credentials. Redirecting you to the unauthorized page...
         </p>
       </div>
     );

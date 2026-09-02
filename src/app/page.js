@@ -1,13 +1,17 @@
 import Hero from "@/components/home/Hero";
-import Testimonials from "@/components/home/Testimonials";
+import FeaturedClasses from "@/components/home/FeaturedClasses";
 import WhyChooseUs from "@/components/home/WhyChooseUs";
+import LatestForumPosts from "@/components/home/LatestForumPosts";
+import Testimonials from "@/components/home/Testimonials";
 
 export default function Home() {
   return (
     <main>
       <Hero />
-      <WhyChooseUs></WhyChooseUs>
-      <Testimonials></Testimonials>
+      <FeaturedClasses />
+      <WhyChooseUs />
+      <LatestForumPosts />
+      <Testimonials />
     </main>
   );
 }

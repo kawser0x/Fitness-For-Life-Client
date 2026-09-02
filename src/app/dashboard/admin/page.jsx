@@ -32,6 +32,7 @@ import {
   Legend 
 } from "recharts";
 import { useSession } from "@/lib/auth-client";
+import { getAuthHeaders } from "@/lib/jwt";
 
 const isValidDirectImageUrl = (url) => {
   if (!url || typeof url !== "string") return false;
@@ -76,7 +77,10 @@ export default function AdminOverviewPage() {
     async function fetchStats() {
       try {
         setLoading(true);
-        const res = await fetch(`${API_URL}/api/admin/stats`);
+        const authHeaders = await getAuthHeaders(user?.email || "admin@ironpulse.com");
+        const res = await fetch(`${API_URL}/api/admin/stats`, {
+          headers: authHeaders,
+        });
         if (!res.ok) throw new Error("Failed to load admin statistics");
         const data = await res.json();
         setAdminStats(data);
@@ -88,7 +92,7 @@ export default function AdminOverviewPage() {
     }
 
     fetchStats();
-  }, [API_URL]);
+  }, [API_URL, user?.email]);
 
   const adminName = mounted
     ? user?.name || user?.email?.split("@")[0] || "Administrator"
@@ -102,8 +106,8 @@ export default function AdminOverviewPage() {
     isValidDirectImageUrl(user.image) &&
     !imageError;
 
-  // Monthly Analytics Data for Recharts Area Chart
-  const monthlyData = [
+  // Dynamic Monthly Analytics Data for Recharts Area Chart
+  const fallbackMonthlyData = [
     { month: "Jan", revenue: 1200, members: 10, bookings: 15 },
     { month: "Feb", revenue: 2800, members: 25, bookings: 35 },
     { month: "Mar", revenue: 4100, members: 40, bookings: 60 },
@@ -112,6 +116,11 @@ export default function AdminOverviewPage() {
     { month: "Jun", revenue: 9200, members: 130, bookings: 170 },
     { month: "Jul", revenue: 11480, members: 180, bookings: 220 },
   ];
+
+  const monthlyData =
+    adminStats.monthlyData && adminStats.monthlyData.length > 0
+      ? adminStats.monthlyData
+      : fallbackMonthlyData;
 
   return (
     <div className="space-y-8">

@@ -12,6 +12,7 @@ import {
 import { Button } from "@heroui/react/button";
 import ImgBBUpload from "@/components/shared/ImgBBUpload";
 import { useSession } from "@/lib/auth-client";
+import { getAuthHeaders } from "@/lib/jwt";
 
 export default function TrainerAddForumPostPage() {
   const router = useRouter();
@@ -39,6 +40,7 @@ export default function TrainerAddForumPostPage() {
 
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      const authHeaders = await getAuthHeaders(user?.email);
 
       const finalImage =
         formData.image && formData.image.trim()
@@ -47,7 +49,7 @@ export default function TrainerAddForumPostPage() {
 
       const res = await fetch(`${API_URL}/api/forum`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({
           title: formData.title,
           image: finalImage,

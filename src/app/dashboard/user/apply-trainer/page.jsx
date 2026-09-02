@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import {
   FaUserGraduate,
@@ -12,10 +12,17 @@ import {
 } from "react-icons/fa6";
 import { Button } from "@heroui/react/button";
 import { useSession } from "@/lib/auth-client";
+import { getAuthHeaders } from "@/lib/jwt";
 
 export default function ApplyTrainerPage() {
   const { data: session } = useSession();
   const user = session?.user;
+
+  // Hydration safety check to prevent SSR / Client mismatches
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("Pending");
@@ -40,9 +47,10 @@ export default function ApplyTrainerPage() {
     setLoading(true);
 
     try {
+      const authHeaders = await getAuthHeaders(user.email);
       const res = await fetch(`${API_URL}/api/trainer/apply`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({
           userEmail: user.email,
           userName: user.name || user.email.split("@")[0] || "Applicant",
@@ -65,6 +73,11 @@ export default function ApplyTrainerPage() {
       setLoading(false);
     }
   };
+
+  const applicantName = mounted
+    ? user?.name || user?.email?.split("@")[0] || "Member"
+    : "Member";
+  const applicantEmail = mounted ? user?.email || "user@example.com" : "user@example.com";
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -102,13 +115,13 @@ export default function ApplyTrainerPage() {
             <div>
               <span className="text-muted-foreground block">Applicant Name</span>
               <span className="font-bold text-foreground text-sm">
-                {user?.name || user?.email?.split("@")[0] || "Member"}
+                {applicantName}
               </span>
             </div>
             <div className="text-right">
               <span className="text-muted-foreground block">Applicant Email</span>
               <span className="font-bold text-cyan-600 dark:text-cyan-400">
-                {user?.email || "user@example.com"}
+                {applicantEmail}
               </span>
             </div>
           </div>

@@ -17,6 +17,7 @@ import {
   FaSpinner,
 } from "react-icons/fa6";
 import { useSession } from "@/lib/auth-client";
+import { getAuthHeaders } from "@/lib/jwt";
 
 export default function UserOverviewPage() {
   const { data: session } = useSession();
@@ -36,14 +37,17 @@ export default function UserOverviewPage() {
   });
   const [loading, setLoading] = useState(true);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
   // Fetch Real User Statistics from Backend MongoDB
   const fetchUserStats = useCallback(async () => {
     if (!user?.email) return;
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/api/user/stats/${encodeURIComponent(user.email)}`);
+      const authHeaders = await getAuthHeaders(user.email);
+      const res = await fetch(`${API_URL}/api/user/stats/${encodeURIComponent(user.email)}`, {
+        headers: authHeaders,
+      });
       if (res.ok) {
         const data = await res.json();
         setStats(data);
@@ -66,7 +70,7 @@ export default function UserOverviewPage() {
   const userName = mounted
     ? user?.name || user?.email?.split("@")[0] || "Member"
     : "Member";
-  const userEmail = mounted ? user?.email  : "user@example.com";
+  const userEmail = mounted ? user?.email : "user@example.com";
   const userRole = mounted ? user?.role || "user" : "user";
   const firstLetter = userName ? userName.charAt(0).toUpperCase() : "U";
   const hasCustomImage =

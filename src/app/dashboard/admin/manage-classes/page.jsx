@@ -15,8 +15,13 @@ import {
   FaUserGraduate,
 } from "react-icons/fa6";
 import { Button } from "@heroui/react/button";
+import { useSession } from "@/lib/auth-client";
+import { getAuthHeaders } from "@/lib/jwt";
 
 export default function AdminManageClassesPage() {
+  const { data: session } = useSession();
+  const user = session?.user;
+
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState(null);
@@ -40,7 +45,10 @@ export default function AdminManageClassesPage() {
   const fetchClasses = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/api/admin/classes`);
+      const authHeaders = await getAuthHeaders(user?.email || "admin@ironpulse.com");
+      const res = await fetch(`${API_URL}/api/admin/classes`, {
+        headers: authHeaders,
+      });
       if (!res.ok) throw new Error("Failed to fetch admin classes");
       const data = await res.json();
       setClasses(data);
@@ -50,7 +58,7 @@ export default function AdminManageClassesPage() {
     } finally {
       setLoading(false);
     }
-  }, [API_URL]);
+  }, [API_URL, user?.email]);
 
   useEffect(() => {
     fetchClasses();
@@ -60,9 +68,10 @@ export default function AdminManageClassesPage() {
   const handleStatusChange = async (classId, newStatus) => {
     try {
       setActionLoadingId(classId);
+      const authHeaders = await getAuthHeaders(user?.email || "admin@ironpulse.com");
       const res = await fetch(`${API_URL}/api/admin/classes/${classId}/status`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({ status: newStatus }),
       });
 
@@ -88,8 +97,10 @@ export default function AdminManageClassesPage() {
     if (!classToDelete) return;
     try {
       setActionLoadingId(classToDelete._id);
+      const authHeaders = await getAuthHeaders(user?.email || "admin@ironpulse.com");
       const res = await fetch(`${API_URL}/api/classes/${classToDelete._id}`, {
         method: "DELETE",
+        headers: authHeaders,
       });
 
       if (!res.ok) throw new Error("Failed to delete class");

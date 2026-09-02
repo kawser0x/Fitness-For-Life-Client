@@ -14,8 +14,12 @@ import {
   FaEnvelope,
 } from "react-icons/fa6";
 import { Button } from "@heroui/react/button";
+import { getAuthHeaders } from "@/lib/jwt";
 
 export default function AdminManageUsersPage() {
+  const { data: session } = useSession();
+  const user = session?.user;
+
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState(null);
@@ -26,7 +30,10 @@ export default function AdminManageUsersPage() {
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/api/admin/users`);
+      const authHeaders = await getAuthHeaders(user?.email || "admin@ironpulse.com");
+      const res = await fetch(`${API_URL}/api/admin/users`, {
+        headers: authHeaders,
+      });
       if (!res.ok) throw new Error("Failed to fetch users");
       const data = await res.json();
       setUsers(data);
@@ -36,7 +43,7 @@ export default function AdminManageUsersPage() {
     } finally {
       setLoading(false);
     }
-  }, [API_URL]);
+  }, [API_URL, user?.email]);
 
   useEffect(() => {
     fetchUsers();
@@ -47,9 +54,10 @@ export default function AdminManageUsersPage() {
     const newStatus = userItem.status === "blocked" ? "active" : "blocked";
     try {
       setActionLoadingId(userItem._id);
+      const authHeaders = await getAuthHeaders(user?.email || "admin@ironpulse.com");
       const res = await fetch(`${API_URL}/api/admin/users/${userItem._id}/status`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({ status: newStatus }),
       });
 
@@ -73,9 +81,10 @@ export default function AdminManageUsersPage() {
   const handleMakeAdmin = async (userItem) => {
     try {
       setActionLoadingId(userItem._id);
+      const authHeaders = await getAuthHeaders(user?.email || "admin@ironpulse.com");
       const res = await fetch(`${API_URL}/api/admin/users/${userItem._id}/role`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({ role: "admin" }),
       });
 

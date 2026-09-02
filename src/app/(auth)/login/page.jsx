@@ -30,7 +30,7 @@ function LoginForm() {
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -39,7 +39,7 @@ function LoginForm() {
 
   const getRoleDashboard = (userObj) => {
     const role = userObj?.role || "user";
-    if (userObj?.email?.toLowerCase() === "admin@ironpulse.com" || role === "admin") {
+    if (userObj?.email?.toLowerCase() === "fitnessforlife@admin.com" || role === "admin") {
       return "/dashboard/admin";
     }
     if (role === "trainer") {
@@ -72,11 +72,10 @@ function LoginForm() {
         let targetRoute = redirectParam;
         if (!targetRoute) {
           try {
-            // Query database directly for saved user role
             const roleRes = await fetch(`${API_URL}/api/user/role/${encodeURIComponent(formData.email)}`);
             if (roleRes.ok) {
               const roleData = await roleRes.json();
-              if (roleData.role === "admin" || formData.email.toLowerCase() === "admin@ironpulse.com") {
+              if (roleData.role === "admin" || formData.email.toLowerCase() === "fitnessforlife@admin.com") {
                 targetRoute = "/dashboard/admin";
               } else if (roleData.role === "trainer") {
                 targetRoute = "/dashboard/trainer";
@@ -124,7 +123,7 @@ function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md space-y-8 bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl">
+    <div className="w-full max-w-md space-y-6 bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl">
       <div className="text-center space-y-3">
         <div className="inline-flex p-3 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-400 text-white shadow-lg shadow-emerald-500/20">
           <Image
@@ -173,7 +172,7 @@ function LoginForm() {
               value={formData.email}
               onChange={handleChange}
               placeholder="name@example.com"
-              className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all"
+              className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200  text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all"
             />
           </div>
         </div>
@@ -200,7 +199,7 @@ function LoginForm() {
               value={formData.password}
               onChange={handleChange}
               placeholder="••••••••"
-              className="w-full pl-10 pr-10 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all"
+              className="w-full pl-10 pr-10 py-3 rounded-xl border  text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all"
             />
             <button
               type="button"
@@ -245,7 +244,7 @@ function LoginForm() {
         type="button"
         onClick={handleGoogleLogin}
         disabled={loading}
-        className="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-sm transition-all flex items-center justify-center gap-3 disabled:opacity-50">
+        className="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-800  font-semibold text-sm transition-all flex items-center justify-center gap-3 disabled:opacity-50">
         <svg className="w-5 h-5" viewBox="0 0 24 24">
           <path
             fill="#4285F4"
@@ -282,7 +281,7 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
-      <main className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <main className="flex-1 flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8">
         <Suspense
           fallback={
             <div className="text-slate-400 text-sm font-semibold">

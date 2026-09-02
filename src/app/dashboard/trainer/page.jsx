@@ -19,6 +19,7 @@ import {
   FaSpinner,
 } from "react-icons/fa6";
 import { useSession } from "@/lib/auth-client";
+import { getAuthHeaders } from "@/lib/jwt";
 
 const isValidDirectImageUrl = (url) => {
   if (!url || typeof url !== "string") return false;
@@ -79,7 +80,10 @@ export default function TrainerOverviewPage() {
       try {
         setLoading(true);
         const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-        const res = await fetch(`${API_URL}/api/trainer/stats/${encodeURIComponent(trainerEmail)}`);
+        const authHeaders = await getAuthHeaders(trainerEmail);
+        const res = await fetch(`${API_URL}/api/trainer/stats/${encodeURIComponent(trainerEmail)}`, {
+          headers: authHeaders,
+        });
         if (!res.ok) throw new Error("Failed to load statistics");
         const data = await res.json();
         setStats(data);

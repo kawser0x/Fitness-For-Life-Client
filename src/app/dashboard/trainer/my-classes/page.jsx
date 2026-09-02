@@ -19,6 +19,7 @@ import {
 } from "react-icons/fa6";
 import { Button } from "@heroui/react/button";
 import { useSession } from "@/lib/auth-client";
+import { getAuthHeaders } from "@/lib/jwt";
 
 export default function MyClassesPage() {
   const { data: session } = useSession();
@@ -66,7 +67,10 @@ export default function MyClassesPage() {
   const fetchClasses = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/api/classes/trainer/${trainerEmail}`);
+      const authHeaders = await getAuthHeaders(trainerEmail);
+      const res = await fetch(`${API_URL}/api/classes/trainer/${trainerEmail}`, {
+        headers: authHeaders,
+      });
       if (!res.ok) throw new Error("Failed to fetch classes");
       const data = await res.json();
       setClasses(data);
@@ -100,9 +104,10 @@ export default function MyClassesPage() {
     e.preventDefault();
     try {
       setActionLoading(true);
+      const authHeaders = await getAuthHeaders(trainerEmail);
       const res = await fetch(`${API_URL}/api/classes/${selectedClassForUpdate._id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify(editFormData),
       });
 
@@ -124,8 +129,10 @@ export default function MyClassesPage() {
     if (!classToDelete) return;
     try {
       setActionLoading(true);
+      const authHeaders = await getAuthHeaders(trainerEmail);
       const res = await fetch(`${API_URL}/api/classes/${classToDelete._id}`, {
         method: "DELETE",
+        headers: authHeaders,
       });
 
       if (!res.ok) throw new Error("Failed to delete class");
@@ -146,7 +153,10 @@ export default function MyClassesPage() {
     setSelectedClassForAttendees(cls);
     try {
       setAttendeesLoading(true);
-      const res = await fetch(`${API_URL}/api/classes/${cls._id}/attendees`);
+      const authHeaders = await getAuthHeaders(trainerEmail);
+      const res = await fetch(`${API_URL}/api/classes/${cls._id}/attendees`, {
+        headers: authHeaders,
+      });
       if (!res.ok) throw new Error("Failed to fetch attendees");
       const data = await res.json();
       setAttendees(data);
@@ -171,13 +181,12 @@ export default function MyClassesPage() {
             Manage your submitted fitness classes, update schedule/details, and view registered students.
           </p>
         </div>
-        <Button
-          as={Link}
+        <Link
           href="/dashboard/trainer/add-class"
-          className="bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold shadow-md shrink-0"
-          startContent={<FaPlus className="h-3.5 w-3.5" />}>
-          Add New Class
-        </Button>
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-blue-600 via-cyan-500 to-teal-400 text-white font-bold text-sm shadow-md hover:opacity-95 transition shrink-0">
+          <FaPlus className="h-3.5 w-3.5" />
+          <span>Add New Class</span>
+        </Link>
       </div>
 
       {/* Classes Data Table */}

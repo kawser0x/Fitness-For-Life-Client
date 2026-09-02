@@ -7,7 +7,7 @@ export async function GET(req) {
   const classId = url.searchParams.get('classId');
   const userEmail = url.searchParams.get('userEmail');
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
   try {
     if (sessionId) {
@@ -26,11 +26,16 @@ export async function GET(req) {
       };
 
       if (bookingPayload.userEmail && bookingPayload.classId) {
-        await fetch(`${API_URL}/api/user/bookings`, {
+        console.log("Saving booking from Stripe success redirect:", bookingPayload);
+        const res = await fetch(`${API_URL}/api/user/bookings`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(bookingPayload),
         });
+        if (!res.ok) {
+          const errData = await res.json();
+          console.error("Failed to save booking to MongoDB:", errData);
+        }
       }
     }
   } catch (err) {

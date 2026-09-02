@@ -16,6 +16,7 @@ import {
 import { Button } from "@heroui/react/button";
 import ImgBBUpload from "@/components/shared/ImgBBUpload";
 import { useSession } from "@/lib/auth-client";
+import { getAuthHeaders } from "@/lib/jwt";
 
 const CATEGORIES = [
   "Yoga",
@@ -58,11 +59,13 @@ export default function AddClassPage() {
 
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      const authHeaders = await getAuthHeaders(user?.email);
 
       const response = await fetch(`${API_URL}/api/classes`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...authHeaders,
         },
         body: JSON.stringify({
           ...formData,

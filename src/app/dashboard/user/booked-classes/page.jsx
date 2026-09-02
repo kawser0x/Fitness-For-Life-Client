@@ -12,7 +12,9 @@ import {
   FaSpinner,
   FaCircleCheck,
 } from "react-icons/fa6";
+import { Button } from "@heroui/react/button";
 import { useSession } from "@/lib/auth-client";
+import { getAuthHeaders } from "@/lib/jwt";
 
 export default function BookedClassesPage() {
   const { data: session } = useSession();
@@ -40,7 +42,10 @@ export default function BookedClassesPage() {
     if (!user?.email) return;
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/api/user/bookings/${encodeURIComponent(user.email)}`);
+      const authHeaders = await getAuthHeaders(user.email);
+      const res = await fetch(`${API_URL}/api/user/bookings/${encodeURIComponent(user.email)}`, {
+        headers: authHeaders,
+      });
       if (!res.ok) throw new Error("Failed to fetch user bookings");
       const data = await res.json();
       setBookings(data);

@@ -24,6 +24,7 @@ import {
 } from "react-icons/fa6";
 import { Button } from "@heroui/react/button";
 import { useSession } from "@/lib/auth-client";
+import { getAuthHeaders } from "@/lib/jwt";
 
 const FALLBACK_CLASS_IMAGE = "https://images.unsplash.com/photo-1517838277536-f5f99be501cd";
 
@@ -41,7 +42,7 @@ export default function ClassDetailsPage({ params }) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   const getValidClassImage = (url) => {
     if (!url || typeof url !== "string") return FALLBACK_CLASS_IMAGE;
@@ -75,12 +76,27 @@ export default function ClassDetailsPage({ params }) {
     }
   }, [API_URL, classId]);
 
+  const [userRole, setUserRole] = useState("user");
+
   // Check if class is already booked or saved in favorites by user
   const checkUserRelations = useCallback(async () => {
     if (!user?.email || !classId) return;
     try {
+      const authHeaders = await getAuthHeaders(user.email);
+
+      // Check live user role from database
+      const roleRes = await fetch(`${API_URL}/api/user/role/${encodeURIComponent(user.email)}`);
+      if (roleRes.ok) {
+        const roleData = await roleRes.json();
+        if (roleData.role) {
+          setUserRole(roleData.role);
+        }
+      }
+
       // Check favorites
-      const favRes = await fetch(`${API_URL}/api/user/favorites/${encodeURIComponent(user.email)}`);
+      const favRes = await fetch(`${API_URL}/api/user/favorites/${encodeURIComponent(user.email)}`, {
+        headers: authHeaders,
+      });
       if (favRes.ok) {
         const favs = await favRes.json();
         const found = favs.some((f) => f.classId === classId);
@@ -88,7 +104,9 @@ export default function ClassDetailsPage({ params }) {
       }
 
       // Check bookings
-      const bookRes = await fetch(`${API_URL}/api/user/bookings/${encodeURIComponent(user.email)}`);
+      const bookRes = await fetch(`${API_URL}/api/user/bookings/${encodeURIComponent(user.email)}`, {
+        headers: authHeaders,
+      });
       if (bookRes.ok) {
         const books = await bookRes.json();
         const foundBook = books.some((b) => b.classId === classId);
@@ -111,8 +129,19 @@ export default function ClassDetailsPage({ params }) {
     }
   }, [user?.email, classId, checkUserRelations]);
 
+  const isTrainerOrAdmin =
+    userRole === "trainer" ||
+    userRole === "admin" ||
+    user?.role === "trainer" ||
+    user?.role === "admin" ||
+    user?.email?.toLowerCase() === "admin@ironpulse.com";
+
   // Handle Add / Remove Favorite Toggle connected to Backend MongoDB
   const handleFavoriteToggle = async () => {
+    if (isTrainerOrAdmin) {
+      toast.info("Trainer & Admin accounts cannot save favorite classes.");
+      return;
+    }
     if (!user?.email) {
       toast.error("Please login to save favorite classes!");
       return;
@@ -121,9 +150,10 @@ export default function ClassDetailsPage({ params }) {
 
     try {
       setFavoriteLoading(true);
+      const authHeaders = await getAuthHeaders(user.email);
       const res = await fetch(`${API_URL}/api/user/favorites/toggle`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({
           userEmail: user.email,
           classId: classData._id,
@@ -151,6 +181,10 @@ export default function ClassDetailsPage({ params }) {
 
   // Handle Book Now Click
   const handleBookNow = () => {
+    if (isTrainerOrAdmin) {
+      toast.info("Trainer & Admin accounts cannot book classes.");
+      return;
+    }
     if (!user) {
       toast.error("Please login to book a class!");
       router.push("/login");
@@ -373,30 +407,48 @@ export default function ClassDetailsPage({ params }) {
                 </div>
               </div>
 
+              {/* Trainer Account Notice */}
+              {isTrainerOrAdmin && (
+                <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-bold text-center flex items-center justify-center gap-2">
+                  <FaShieldHalved className="h-4 w-4 text-amber-500 shrink-0" />
+                  <span>Trainer / Admin Account: Class booking & favorites are reserved for student members.</span>
+                </div>
+              )}
+
               {/* Animated Book Now Button */}
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <motion.div whileHover={{ scale: isTrainerOrAdmin ? 1 : 1.02 }} whileTap={{ scale: isTrainerOrAdmin ? 1 : 0.98 }}>
                 <Button
-                  disabled={isBooked}
+                  disabled={isBooked || isTrainerOrAdmin}
                   onClick={handleBookNow}
                   size="lg"
                   className={`w-full py-3.5 font-bold rounded-2xl shadow-xl transition-all ${
-                    isBooked
+                    isTrainerOrAdmin
+                      ? "bg-default-300/40 text-muted-foreground cursor-not-allowed blur-[2px] opacity-60"
+                      : isBooked
                       ? "bg-emerald-600 text-white cursor-not-allowed opacity-95"
                       : "bg-gradient-to-r from-blue-600 via-cyan-500 to-teal-400 text-white hover:opacity-95 shadow-cyan-500/20"
                   }`}
                   startContent={
                     isBooked ? <FaCheck className="h-4 w-4" /> : <FaCreditCard className="h-4 w-4" />
                   }>
-                  {isBooked ? "Already Booked" : `Book Now • $${classData.price}`}
+                  {isTrainerOrAdmin
+                    ? "Booking Disabled for Trainers"
+                    : isBooked
+                    ? "Already Booked"
+                    : `Book Now • $${classData.price}`}
                 </Button>
               </motion.div>
 
               {/* Secondary Favorite Button */}
               <button
                 type="button"
-                disabled={favoriteLoading}
+                disabled={favoriteLoading || isTrainerOrAdmin}
                 onClick={handleFavoriteToggle}
-                className="w-full py-2.5 rounded-xl border border-border text-xs font-bold text-foreground hover:bg-accent/40 transition flex items-center justify-center gap-2 disabled:opacity-50">
+                className={`w-full py-2.5 rounded-xl border border-border text-xs font-bold transition flex items-center justify-center gap-2 ${
+                  isTrainerOrAdmin
+                    ? "bg-default-200/30 text-muted-foreground cursor-not-allowed blur-[2px] opacity-60"
+                    : "text-foreground hover:bg-accent/40"
+                }`}>
                 {favoriteLoading ? (
                   <FaSpinner className="h-3.5 w-3.5 animate-spin text-cyan-500" />
                 ) : isFavorite ? (

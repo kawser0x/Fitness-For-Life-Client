@@ -37,7 +37,7 @@ export default function RegisterPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   // Password Rules Validation Logic
   const hasMinLength = formData.password.length >= 6;
@@ -48,7 +48,8 @@ export default function RegisterPage() {
   // Check if image URL is an ImgBB viewer webpage link (e.g. ibb.co.com/xxx or ibb.co/xxx)
   const isImgBBPageUrl =
     formData.image &&
-    (formData.image.includes("ibb.co/") || formData.image.includes("ibb.co.com/")) &&
+    (formData.image.includes("ibb.co/") ||
+      formData.image.includes("ibb.co.com/")) &&
     !formData.image.includes("i.ibb.co");
 
   const handleChange = (e) => {
@@ -75,7 +76,7 @@ export default function RegisterPage() {
 
     if (isImgBBPageUrl) {
       setErrorMsg(
-        "You entered an ImgBB viewer webpage link (ibb.co.com/xxx). Please use a direct image URL (e.g. https://i.ibb.co.com/.../image.jpg) or leave blank for a default avatar."
+        "You entered an ImgBB viewer webpage link (ibb.co.com/xxx). Please use a direct image URL (e.g. https://i.ibb.co.com/.../image.jpg) or leave blank for a default avatar.",
       );
       return;
     }
@@ -89,9 +90,7 @@ export default function RegisterPage() {
         email: formData.email,
         password: formData.password,
         name: formData.name,
-        image:
-          formData.image ||
-          "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+        image: formData?.image,
       });
 
       if (res?.error) {
@@ -114,7 +113,7 @@ export default function RegisterPage() {
         }
 
         setSuccessMsg(
-          `Account registered as ${formData.role === "trainer" ? "Trainer" : "User"}! Redirecting to login...`
+          `Account registered as ${formData.role === "trainer" ? "Trainer" : "User"}! Redirecting to login...`,
         );
         setTimeout(() => {
           router.push("/login");
@@ -225,7 +224,7 @@ export default function RegisterPage() {
                   value={formData.name}
                   onChange={handleChange}
                   placeholder="John Doe"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800  text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all"
                 />
               </div>
             </div>
@@ -245,7 +244,7 @@ export default function RegisterPage() {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="name@example.com"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all"
                 />
               </div>
             </div>
@@ -267,18 +266,22 @@ export default function RegisterPage() {
                   className={`w-full pl-10 pr-4 py-3 rounded-xl border ${
                     isImgBBPageUrl
                       ? "border-amber-500 bg-amber-500/5"
-                      : "border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
-                  } text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all`}
+                      : "border-slate-200 dark:border-slate-800 "
+                  }  text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all`}
                 />
               </div>
 
               {isImgBBPageUrl ? (
                 <p className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold leading-tight pt-1">
-                  ⚠️ Note: ImgBB webpage viewer links (e.g. ibb.co.com/xxx) are HTML pages. Right-click the image and select "Copy Image Address" to get direct link (e.g. https://i.ibb.co.com/xxx.jpg).
+                  ⚠️ Note: ImgBB webpage viewer links (e.g. ibb.co.com/xxx) are
+                  HTML pages. Right-click the image and select "Copy Image
+                  Address" to get direct link (e.g.
+                  https://i.ibb.co.com/xxx.jpg).
                 </p>
               ) : (
                 <p className="text-[11px] text-slate-400 font-medium pt-0.5">
-                  Direct image link required (e.g. ending in .jpg, .png or starting with https://i.ibb.co...).
+                  Direct image link required (e.g. ending in .jpg, .png or
+                  starting with https://i.ibb.co...).
                 </p>
               )}
             </div>
@@ -298,7 +301,7 @@ export default function RegisterPage() {
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-10 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all"
+                  className="w-full pl-10 pr-10 py-3 rounded-xl border border-slate-200 dark:border-slate-800  text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all"
                 />
                 <button
                   type="button"
@@ -382,7 +385,7 @@ export default function RegisterPage() {
             type="button"
             onClick={handleGoogleAuth}
             disabled={loading}
-            className="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-sm transition-all flex items-center justify-center gap-3 disabled:opacity-50">
+            className="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-800  font-semibold text-sm transition-all flex items-center justify-center gap-3 disabled:opacity-50">
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
                 fill="#4285F4"

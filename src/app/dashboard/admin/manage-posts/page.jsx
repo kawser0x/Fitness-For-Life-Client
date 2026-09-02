@@ -19,8 +19,13 @@ import {
   FaComment,
 } from "react-icons/fa6";
 import { Button } from "@heroui/react/button";
+import { useSession } from "@/lib/auth-client";
+import { getAuthHeaders } from "@/lib/jwt";
 
 export default function AdminManagePostsPage() {
+  const { data: session } = useSession();
+  const user = session?.user;
+
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedPostForView, setSelectedPostForView] = useState(null);
@@ -47,7 +52,10 @@ export default function AdminManagePostsPage() {
   const fetchPosts = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/api/admin/forum-posts`);
+      const authHeaders = await getAuthHeaders(user?.email || "admin@ironpulse.com");
+      const res = await fetch(`${API_URL}/api/admin/forum-posts`, {
+        headers: authHeaders,
+      });
       if (!res.ok) throw new Error("Failed to fetch admin forum posts");
       const data = await res.json();
       setPosts(data);
@@ -57,7 +65,7 @@ export default function AdminManagePostsPage() {
     } finally {
       setLoading(false);
     }
-  }, [API_URL]);
+  }, [API_URL, user?.email]);
 
   useEffect(() => {
     fetchPosts();
@@ -86,8 +94,10 @@ export default function AdminManagePostsPage() {
     if (!postToDelete) return;
     try {
       setDeleteLoading(true);
+      const authHeaders = await getAuthHeaders(user?.email || "admin@ironpulse.com");
       const res = await fetch(`${API_URL}/api/forum/${postToDelete._id}`, {
         method: "DELETE",
+        headers: authHeaders,
       });
 
       if (!res.ok) throw new Error("Failed to delete post");

@@ -20,17 +20,18 @@ import {
 } from "react-icons/fa6";
 import { Button } from "@heroui/react/button";
 import { useSession } from "@/lib/auth-client";
+import { getAuthHeaders } from "@/lib/jwt";
 
 export default function ForumPostDetailsPage({ params }) {
   const resolvedParams = use(params);
   const postId = resolvedParams?.id;
 
-  const { data: session, isPending: sessionLoading } = useSession();
+  const { data: session } = useSession();
   const user = session?.user;
 
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [voteLoading, setVoteLoading] = useState(false);
+  const [userRole, setUserRole] = useState("user");
 
   // Comments state
   const [comments, setComments] = useState([]);
@@ -43,8 +44,24 @@ export default function ForumPostDetailsPage({ params }) {
   const [editCommentText, setEditCommentText] = useState("");
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-  const FALLBACK_IMAGE =
-    "https://images.unsplash.com/photo-1517838277536-f5f99be501cd";
+  const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1517838277536-f5f99be501cd";
+
+  // Fetch User Role from database
+  useEffect(() => {
+    async function fetchRole() {
+      if (!user?.email) return;
+      try {
+        const res = await fetch(`${API_URL}/api/user/role/${encodeURIComponent(user.email)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setUserRole(data.role || "user");
+        }
+      } catch (err) {
+        console.error("Error loading user role:", err);
+      }
+    }
+    fetchRole();
+  }, [API_URL, user?.email]);
 
   // Fetch Post Details from MongoDB Backend
   const fetchPostDetails = useCallback(async () => {
@@ -84,6 +101,15 @@ export default function ForumPostDetailsPage({ params }) {
     }
   }, [postId, fetchPostDetails, fetchComments]);
 
+  // Authorization Permissions
+  const userEmail = user?.email || "";
+  const isPostAuthor = Boolean(
+    userEmail && post?.authorEmail && userEmail.toLowerCase() === post.authorEmail.toLowerCase()
+  );
+  const isAdmin = Boolean(
+    userRole === "admin" || (userEmail && userEmail.toLowerCase() === "admin@ironpulse.com")
+  );
+
   // Handle Like / Dislike Vote (One vote per user rule)
   const handleVote = async (voteType) => {
     if (!user) {
@@ -92,10 +118,10 @@ export default function ForumPostDetailsPage({ params }) {
     }
 
     try {
-      setVoteLoading(true);
+      const authHeaders = await getAuthHeaders(user.email);
       const res = await fetch(`${API_URL}/api/forum/${postId}/vote`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({
           userEmail: user.email,
           type: voteType,
@@ -115,25 +141,25 @@ export default function ForumPostDetailsPage({ params }) {
     } catch (error) {
       console.error("Error voting:", error);
       toast.error(error.message || "Failed to record vote");
-    } finally {
-      setVoteLoading(false);
     }
   };
 
-  // Handle New Comment Submission
+  // Handle New Comment Submission (Open to all logged-in users)
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
     if (!user) {
       toast.error("Please login to post comments!");
       return;
     }
+
     if (!newCommentText.trim()) return;
 
     try {
       setCommentSubmitting(true);
+      const authHeaders = await getAuthHeaders(user.email);
       const res = await fetch(`${API_URL}/api/forum/${postId}/comments`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({
           userEmail: user.email,
           userName: user.name || user.email.split("@")[0] || "Member",
@@ -156,29 +182,36 @@ export default function ForumPostDetailsPage({ params }) {
     }
   };
 
-  // Handle Delete Own Comment
+  // Handle Delete Comment (Allowed for Comment Author, Post Author Trainer, or Admin)
   const handleDeleteComment = async (commentId) => {
     try {
-      const res = await fetch(`${API_URL}/api/forum/comments/${commentId}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("Failed to delete comment");
+      const authHeaders = await getAuthHeaders(userEmail);
+      const res = await fetch(
+        `${API_URL}/api/forum/comments/${commentId}?userEmail=${encodeURIComponent(userEmail)}`,
+        {
+          method: "DELETE",
+          headers: authHeaders,
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to delete comment");
 
-      toast.success("Comment deleted.");
+      toast.success("Message deleted successfully.");
       fetchComments();
     } catch (error) {
       console.error("Error deleting comment:", error);
-      toast.error("Failed to delete comment");
+      toast.error(error.message || "Failed to delete comment");
     }
   };
 
-  // Handle Edit Own Comment Submit
+  // Handle Edit Comment Submit
   const handleEditCommentSubmit = async (commentId) => {
     if (!editCommentText.trim()) return;
     try {
+      const authHeaders = await getAuthHeaders(user.email);
       const res = await fetch(`${API_URL}/api/forum/comments/${commentId}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({
           commentText: editCommentText.trim(),
           userEmail: user.email,
@@ -209,16 +242,15 @@ export default function ForumPostDetailsPage({ params }) {
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-background py-16 text-center">
+      <div className="min-h-screen bg-background py-16 text-center space-y-4">
         <h2 className="text-xl font-bold text-foreground">Post Not Found</h2>
-        <Button as={Link} href="/forum" className="mt-4">
+        <Button as={Link} href="/forum" className="bg-cyan-500 text-white font-bold">
           Back to Forum
         </Button>
       </div>
     );
   }
 
-  const userEmail = user?.email || "";
   const hasLiked = post.likes?.includes(userEmail);
   const hasDisliked = post.dislikes?.includes(userEmail);
   const isDirectImage =
@@ -293,12 +325,11 @@ export default function ForumPostDetailsPage({ params }) {
             {post.description}
           </div>
 
-          {/* Interactive Like / Dislike Voting Bar (1 vote limit per user) */}
+          {/* Interactive Like / Dislike Voting Bar */}
           <div className="flex items-center justify-between pt-2">
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                disabled={voteLoading}
                 onClick={() => handleVote("like")}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition border ${
                   hasLiked
@@ -311,7 +342,6 @@ export default function ForumPostDetailsPage({ params }) {
 
               <button
                 type="button"
-                disabled={voteLoading}
                 onClick={() => handleVote("dislike")}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition border ${
                   hasDisliked
@@ -329,14 +359,16 @@ export default function ForumPostDetailsPage({ params }) {
           </div>
         </div>
 
-        {/* COMMENTS SECTION */}
+        {/* COMMENTS & REPLIES SECTION */}
         <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
-          <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-            <FaComment className="h-5 w-5 text-cyan-500" />
-            Community Discussion ({comments.length})
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <FaComment className="h-5 w-5 text-cyan-500" />
+              Community Comments & Discussion ({comments.length})
+            </h3>
+          </div>
 
-          {/* Post New Comment Form */}
+          {/* Comment Form (Open to all logged-in members) */}
           {user ? (
             <form onSubmit={handleCommentSubmit} className="space-y-3">
               <textarea
@@ -344,7 +376,7 @@ export default function ForumPostDetailsPage({ params }) {
                 required
                 value={newCommentText}
                 onChange={(e) => setNewCommentText(e.target.value)}
-                placeholder="Write your thoughts, questions, or comments on this article..."
+                placeholder="Share your thoughts, ask a question, or comment on this article..."
                 className="w-full px-4 py-3 rounded-2xl border border-border text-foreground text-sm focus:outline-none focus:border-cyan-500 transition leading-relaxed bg-background"
               />
               <div className="flex justify-end">
@@ -352,11 +384,7 @@ export default function ForumPostDetailsPage({ params }) {
                   type="submit"
                   isLoading={commentSubmitting}
                   className="bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold shadow-md rounded-xl"
-                  startContent={
-                    !commentSubmitting && (
-                      <FaPaperPlane className="h-3.5 w-3.5" />
-                    )
-                  }>
+                  startContent={!commentSubmitting && <FaPaperPlane className="h-3.5 w-3.5" />}>
                   Post Comment
                 </Button>
               </div>
@@ -364,20 +392,15 @@ export default function ForumPostDetailsPage({ params }) {
           ) : (
             <div className="p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-xs text-cyan-600 dark:text-cyan-300 flex items-center justify-between gap-4">
               <span className="flex items-center gap-2 font-medium">
-                <FaLock className="h-4 w-4 shrink-0" /> Log in to join the
-                discussion and post comments.
+                <FaLock className="h-4 w-4 shrink-0" /> Log in to join the discussion and post comments.
               </span>
-              <Button
-                as={Link}
-                href="/login"
-                size="sm"
-                className="bg-cyan-600 text-white font-bold shrink-0">
+              <Button as={Link} href="/login" size="sm" className="bg-cyan-600 text-white font-bold shrink-0">
                 Log In
               </Button>
             </div>
           )}
 
-          {/* Comments List */}
+          {/* Comments / Replies List */}
           <div className="space-y-4 pt-4 border-t border-border">
             {commentsLoading ? (
               <div className="py-6 text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
@@ -386,12 +409,14 @@ export default function ForumPostDetailsPage({ params }) {
               </div>
             ) : comments.length === 0 ? (
               <div className="py-8 text-center text-xs text-muted-foreground">
-                No comments yet. Be the first to comment on this post!
+                No comments posted yet for this article. Be the first to comment!
               </div>
             ) : (
               comments.map((comment) => {
-                const isMyComment =
-                  userEmail && comment.userEmail === userEmail;
+                const isCommentAuthor = Boolean(
+                  userEmail && comment.userEmail && userEmail.toLowerCase() === comment.userEmail.toLowerCase()
+                );
+                const canDeleteThisComment = isCommentAuthor || isPostAuthor || isAdmin;
                 const isEditing = editingCommentId === comment._id;
 
                 return (
@@ -404,35 +429,49 @@ export default function ForumPostDetailsPage({ params }) {
                           {comment.userName ? comment.userName.charAt(0) : "U"}
                         </div>
                         <div>
-                          <span className="font-bold text-foreground">
+                          <span className="font-bold text-foreground flex items-center gap-1.5">
                             {comment.userName}
+                            {comment.userRole && (
+                              <span className={`px-1.5 py-0.2 rounded text-[9px] font-extrabold uppercase ${
+                                comment.userRole === "Admin"
+                                  ? "bg-cyan-500/20 text-cyan-600 dark:text-cyan-400"
+                                  : comment.userRole === "Trainer"
+                                  ? "bg-blue-500/20 text-blue-600 dark:text-blue-400"
+                                  : "bg-accent text-muted-foreground"
+                              }`}>
+                                {comment.userRole}
+                              </span>
+                            )}
                           </span>
-                          <span className="text-[10px] text-muted-foreground ml-2">
+                          <span className="text-[10px] text-muted-foreground">
                             {new Date(comment.createdAt).toLocaleDateString()}
                           </span>
                         </div>
                       </div>
 
-                      {/* Action options for comment author */}
-                      {isMyComment && !isEditing && (
-                        <div className="flex items-center gap-2">
+                      {/* Edit & Delete Controls */}
+                      <div className="flex items-center gap-2">
+                        {isCommentAuthor && !isEditing && (
                           <button
                             type="button"
                             onClick={() => {
                               setEditingCommentId(comment._id);
                               setEditCommentText(comment.commentText);
                             }}
-                            className="text-blue-500 hover:underline flex items-center gap-1">
+                            className="text-blue-500 hover:underline flex items-center gap-1 text-[11px] font-semibold">
                             <FaPen className="h-3 w-3" /> Edit
                           </button>
+                        )}
+
+                        {canDeleteThisComment && (
                           <button
                             type="button"
                             onClick={() => handleDeleteComment(comment._id)}
-                            className="text-rose-500 hover:underline flex items-center gap-1">
-                            <FaTrash className="h-3 w-3" /> Delete
+                            className="text-rose-500 hover:underline flex items-center gap-1 text-[11px] font-semibold">
+                            <FaTrash className="h-3 w-3" /> Delete Message
                           </button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
 
                     {isEditing ? (
@@ -453,9 +492,7 @@ export default function ForumPostDetailsPage({ params }) {
                           <Button
                             size="sm"
                             className="bg-cyan-500 text-white font-bold"
-                            onClick={() =>
-                              handleEditCommentSubmit(comment._id)
-                            }>
+                            onClick={() => handleEditCommentSubmit(comment._id)}>
                             Save
                           </Button>
                         </div>

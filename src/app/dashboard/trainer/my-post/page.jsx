@@ -14,11 +14,12 @@ import {
 } from "react-icons/fa6";
 import { Button } from "@heroui/react/button";
 import { useSession } from "@/lib/auth-client";
+import { getAuthHeaders } from "@/lib/jwt";
 
 export default function MyForumPostsPage() {
   const { data: session } = useSession();
   const user = session?.user;
-  const trainerEmail = user?.email || "elena.rostova@fitness.com";
+  const trainerEmail = user?.email || "";
 
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,9 +31,13 @@ export default function MyForumPostsPage() {
 
   // Fetch Trainer Forum Posts from MongoDB Backend
   const fetchPosts = useCallback(async () => {
+    if (!trainerEmail) return;
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/api/forum/trainer/${trainerEmail}`);
+      const authHeaders = await getAuthHeaders(trainerEmail);
+      const res = await fetch(`${API_URL}/api/forum/trainer/${encodeURIComponent(trainerEmail)}`, {
+        headers: authHeaders,
+      });
       if (!res.ok) throw new Error("Failed to fetch forum posts");
       const data = await res.json();
       setPosts(data);
@@ -53,8 +58,10 @@ export default function MyForumPostsPage() {
     if (!postToDelete) return;
     try {
       setDeleteLoading(true);
+      const authHeaders = await getAuthHeaders(trainerEmail);
       const res = await fetch(`${API_URL}/api/forum/${postToDelete._id}`, {
         method: "DELETE",
+        headers: authHeaders,
       });
 
       if (!res.ok) throw new Error("Failed to delete forum post");
@@ -83,13 +90,12 @@ export default function MyForumPostsPage() {
             Manage your published Community Forum articles, tutorials, and fitness insights.
           </p>
         </div>
-        <Button
-          as={Link}
+        <Link
           href="/dashboard/trainer/add-post"
-          className="bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold shadow-md shrink-0"
-          startContent={<FaPenToSquare className="h-3.5 w-3.5" />}>
-          Add New Post
-        </Button>
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-blue-600 via-cyan-500 to-teal-400 text-white font-bold text-sm shadow-md hover:opacity-95 transition shrink-0">
+          <FaPenToSquare className="h-3.5 w-3.5" />
+          <span>Add New Post</span>
+        </Link>
       </div>
 
       {/* Posts List / Grid */}
@@ -105,17 +111,16 @@ export default function MyForumPostsPage() {
           <p className="text-muted-foreground text-sm">
             You haven't authored any Community Forum posts yet.
           </p>
-          <Button
-            as={Link}
+          <Link
             href="/dashboard/trainer/add-post"
-            className="bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold">
-            Create First Forum Post
-          </Button>
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-blue-600 via-cyan-500 to-teal-400 text-white font-bold text-sm shadow-md hover:opacity-95 transition">
+            <FaPenToSquare className="h-3.5 w-3.5" />
+            <span>Create First Forum Post</span>
+          </Link>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {posts.map((post) => {
-            // Check if post image is a direct image URL
             const isDirectImage = post.image && (post.image.includes("i.ibb.co") || post.image.includes("images.unsplash") || post.image.match(/\.(jpeg|jpg|gif|png|webp)/i));
             const imageSrc = isDirectImage ? post.image : FALLBACK_IMAGE;
 
@@ -167,7 +172,7 @@ export default function MyForumPostsPage() {
                     <button
                       type="button"
                       onClick={() => setPostToDelete(post)}
-                      className="px-3 py-1.5 rounded-lg font-semibold bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition flex items-center gap-1">
+                      className="px-3 py-1.5 rounded-lg font-semibold bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition flex items-center gap-1 cursor-pointer">
                       <FaTrash className="h-3 w-3" /> Delete
                     </button>
                   </div>

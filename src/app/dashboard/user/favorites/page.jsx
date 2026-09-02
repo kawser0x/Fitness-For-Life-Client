@@ -13,6 +13,7 @@ import {
   FaDumbbell,
 } from "react-icons/fa6";
 import { useSession } from "@/lib/auth-client";
+import { getAuthHeaders } from "@/lib/jwt";
 
 export default function FavoritePage() {
   const { data: session } = useSession();
@@ -41,7 +42,10 @@ export default function FavoritePage() {
     if (!user?.email) return;
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/api/user/favorites/${encodeURIComponent(user.email)}`);
+      const authHeaders = await getAuthHeaders(user.email);
+      const res = await fetch(`${API_URL}/api/user/favorites/${encodeURIComponent(user.email)}`, {
+        headers: authHeaders,
+      });
       if (!res.ok) throw new Error("Failed to fetch favorites");
       const data = await res.json();
       setFavorites(data);
@@ -65,9 +69,10 @@ export default function FavoritePage() {
   const handleRemoveFavorite = async (classId) => {
     try {
       setRemoveLoadingId(classId);
+      const authHeaders = await getAuthHeaders(user.email);
       const res = await fetch(`${API_URL}/api/user/favorites/toggle`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({
           userEmail: user.email,
           classId,

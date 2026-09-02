@@ -15,8 +15,13 @@ import {
   FaIdBadge,
 } from "react-icons/fa6";
 import { Button } from "@heroui/react/button";
+import { useSession } from "@/lib/auth-client";
+import { getAuthHeaders } from "@/lib/jwt";
 
 export default function AdminAppliedTrainersPage() {
+  const { data: session } = useSession();
+  const user = session?.user;
+
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -31,7 +36,10 @@ export default function AdminAppliedTrainersPage() {
   const fetchApplications = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/api/admin/trainer-applications`);
+      const authHeaders = await getAuthHeaders(user?.email || "admin@ironpulse.com");
+      const res = await fetch(`${API_URL}/api/admin/trainer-applications`, {
+        headers: authHeaders,
+      });
       if (!res.ok) throw new Error("Failed to fetch trainer applications");
       const data = await res.json();
       setApplications(data);
@@ -41,7 +49,7 @@ export default function AdminAppliedTrainersPage() {
     } finally {
       setLoading(false);
     }
-  }, [API_URL]);
+  }, [API_URL, user?.email]);
 
   useEffect(() => {
     fetchApplications();
@@ -59,11 +67,12 @@ export default function AdminAppliedTrainersPage() {
 
     try {
       setActionLoading(true);
+      const authHeaders = await getAuthHeaders(user?.email || "admin@ironpulse.com");
       const res = await fetch(
         `${API_URL}/api/admin/trainer-applications/${selectedApp._id}/review`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...authHeaders },
           body: JSON.stringify({
             action: actionType, // "approve" | "reject"
             feedback: feedback.trim(),

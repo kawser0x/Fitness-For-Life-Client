@@ -7,6 +7,7 @@ import Image from "next/image";
 import logo from "../../../public/assets/logo.png";
 import Theme from "./Theme";
 import { useSession, signOut } from "@/lib/auth-client";
+import { syncJWTToken } from "@/lib/jwt";
 
 const isValidDirectImageUrl = (url) => {
   if (!url || typeof url !== "string") return false;
@@ -47,6 +48,7 @@ const Navbar = () => {
   useEffect(() => {
     if (user?.email) {
       fetchLiveRole();
+      syncJWTToken(user.email);
     }
   }, [user?.email, fetchLiveRole]);
 

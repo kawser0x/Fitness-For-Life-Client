@@ -14,6 +14,7 @@ import {
   FaEnvelope,
 } from "react-icons/fa6";
 import { Button } from "@heroui/react/button";
+import { useSession } from "@/lib/auth-client";
 import { getAuthHeaders } from "@/lib/jwt";
 
 export default function AdminManageUsersPage() {
@@ -24,7 +25,7 @@ export default function AdminManageUsersPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState(null);
 
-  const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL ;
+  const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
 
   // Fetch registered users from MongoDB
   const fetchUsers = useCallback(async () => {

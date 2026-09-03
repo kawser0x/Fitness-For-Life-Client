@@ -42,7 +42,7 @@ export default function ClassDetailsPage({ params }) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+  const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
   const getValidClassImage = (url) => {
     if (!url || typeof url !== "string") return FALLBACK_CLASS_IMAGE;

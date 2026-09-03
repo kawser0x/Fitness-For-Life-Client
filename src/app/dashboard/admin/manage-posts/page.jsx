@@ -34,7 +34,7 @@ export default function AdminManagePostsPage() {
   const [postToDelete, setPostToDelete] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL ;
   const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1517838277536-f5f99be501cd";
 
   const getValidImage = (url) => {

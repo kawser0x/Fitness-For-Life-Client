@@ -39,7 +39,7 @@ export default function AllClassesPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalClasses, setTotalClasses] = useState(0);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
   const getValidClassImage = (url) => {
     if (!url || typeof url !== "string") return FALLBACK_CLASS_IMAGE;

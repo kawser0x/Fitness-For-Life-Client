@@ -2,7 +2,7 @@
 
 import { getSession } from "@/lib/auth-client";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 /**
  * Retrieve authorization headers containing Better Auth session token or JWT Bearer token

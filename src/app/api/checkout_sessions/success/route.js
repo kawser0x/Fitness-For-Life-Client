@@ -7,7 +7,7 @@ export async function GET(req) {
   const classId = url.searchParams.get('classId');
   const userEmail = url.searchParams.get('userEmail');
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL ;
 
   try {
     if (sessionId) {

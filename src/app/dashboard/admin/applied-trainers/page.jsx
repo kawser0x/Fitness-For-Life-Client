@@ -30,7 +30,7 @@ export default function AdminAppliedTrainersPage() {
   const [feedback, setFeedback] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL ;
 
   // Fetch Trainer Applications from Backend MongoDB
   const fetchApplications = useCallback(async () => {

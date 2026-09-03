@@ -22,7 +22,7 @@ export default function ForumPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalPosts, setTotalPosts] = useState(0);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
   const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1517838277536-f5f99be501cd";
 
   // Fetch Public Forum Posts with Server-Side Pagination

@@ -24,7 +24,7 @@ export default function AdminManageUsersPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState(null);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL ;
 
   // Fetch registered users from MongoDB
   const fetchUsers = useCallback(async () => {

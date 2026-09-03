@@ -35,7 +35,7 @@ export default function ApplyTrainerPage() {
     bio: "Certified fitness instructor with group training experience focused on strength, fat loss, and endurance build.",
   });
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -62,10 +62,13 @@ export default function ApplyTrainerPage() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to submit application");
+      if (!res.ok)
+        throw new Error(data.error || "Failed to submit application");
 
       setStatus("Pending");
-      toast.success("Trainer application submitted successfully! Status set to Pending.");
+      toast.success(
+        "Trainer application submitted successfully! Status set to Pending.",
+      );
     } catch (error) {
       console.error("Error submitting trainer application:", error);
       toast.error(error.message || "Failed to submit application");
@@ -77,7 +80,9 @@ export default function ApplyTrainerPage() {
   const applicantName = mounted
     ? user?.name || user?.email?.split("@")[0] || "Member"
     : "Member";
-  const applicantEmail = mounted ? user?.email || "user@example.com" : "user@example.com";
+  const applicantEmail = mounted
+    ? user?.email || "user@example.com"
+    : "user@example.com";
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -88,7 +93,8 @@ export default function ApplyTrainerPage() {
           Apply as Certified Trainer
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Become a certified trainer on FitnessForLife to list your classes, track enrolled attendees, and share insights on the community forum.
+          Become a certified trainer on FitnessForLife to list your classes,
+          track enrolled attendees, and share insights on the community forum.
         </p>
       </div>
 
@@ -101,7 +107,9 @@ export default function ApplyTrainerPage() {
               Application Status: Pending Review
             </h4>
             <p className="text-xs text-amber-800 dark:text-amber-200 leading-relaxed">
-              Your application has been submitted and is currently being evaluated by the Admin team. You will receive an update once reviewed.
+              Your application has been submitted and is currently being
+              evaluated by the Admin team. You will receive an update once
+              reviewed.
             </p>
           </div>
         </div>
@@ -113,13 +121,17 @@ export default function ApplyTrainerPage() {
           {/* Applicant Header Info */}
           <div className="p-4 rounded-2xl bg-accent/30 border border-border flex items-center justify-between text-xs">
             <div>
-              <span className="text-muted-foreground block">Applicant Name</span>
+              <span className="text-muted-foreground block">
+                Applicant Name
+              </span>
               <span className="font-bold text-foreground text-sm">
                 {applicantName}
               </span>
             </div>
             <div className="text-right">
-              <span className="text-muted-foreground block">Applicant Email</span>
+              <span className="text-muted-foreground block">
+                Applicant Email
+              </span>
               <span className="font-bold text-cyan-600 dark:text-cyan-400">
                 {applicantEmail}
               </span>

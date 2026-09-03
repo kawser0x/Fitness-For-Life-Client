@@ -79,7 +79,7 @@ export default function TrainerOverviewPage() {
       }
       try {
         setLoading(true);
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+        const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL ;
         const authHeaders = await getAuthHeaders(trainerEmail);
         const res = await fetch(`${API_URL}/api/trainer/stats/${encodeURIComponent(trainerEmail)}`, {
           headers: authHeaders,

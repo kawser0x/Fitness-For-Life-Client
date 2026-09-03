@@ -26,7 +26,7 @@ export default function TrainerDashboardLayout({ children }) {
   const [role, setRole] = useState(null);
   const [checkingRole, setCheckingRole] = useState(true);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
   // Verify Role from Backend MongoDB API
   const verifyRole = useCallback(async () => {

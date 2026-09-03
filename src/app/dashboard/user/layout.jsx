@@ -23,7 +23,7 @@ export default function UserDashboardLayout({ children }) {
   const [mounted, setMounted] = useState(false);
   const [dbRole, setDbRole] = useState(null);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL ;
 
   useEffect(() => {
     setMounted(true);

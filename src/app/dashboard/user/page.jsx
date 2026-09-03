@@ -37,7 +37,7 @@ export default function UserOverviewPage() {
   });
   const [loading, setLoading] = useState(true);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
   // Fetch Real User Statistics from Backend MongoDB
   const fetchUserStats = useCallback(async () => {

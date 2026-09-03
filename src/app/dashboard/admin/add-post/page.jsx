@@ -39,7 +39,7 @@ export default function AdminAddForumPostPage() {
     setLoading(true);
 
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
       const authHeaders = await getAuthHeaders(user?.email || "admin@ironpulse.com");
 
       const finalImage =

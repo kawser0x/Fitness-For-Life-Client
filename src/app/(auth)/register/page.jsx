@@ -37,7 +37,7 @@ export default function RegisterPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+  const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
   // Password Rules Validation Logic
   const hasMinLength = formData.password.length >= 6;

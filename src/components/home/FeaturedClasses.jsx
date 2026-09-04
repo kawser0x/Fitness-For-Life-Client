@@ -22,7 +22,7 @@ export default function FeaturedClasses() {
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL ;
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
 
   const getValidClassImage = (url) => {
     if (!url || typeof url !== "string") return FALLBACK_CLASS_IMAGE;
@@ -55,8 +55,8 @@ export default function FeaturedClasses() {
   }, [API_URL]);
 
   return (
-    <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background via-cyan-950/10 to-background border-b border-border">
-      <div className="max-w-7xl mx-auto space-y-12">
+    <section className="py-10 px-4   lg:px-8 bg-gradient-to-b from-background via-cyan-950/10 to-background border-b border-border">
+      <div className="max-w-7xl mx-auto space-y-7">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto space-y-4">
           <span className="px-4 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-widest bg-cyan-500/10 text-cyan-500 border border-cyan-500/20 inline-flex items-center gap-2">
@@ -174,16 +174,13 @@ export default function FeaturedClasses() {
           </div>
         )}
 
-        {/* View All Classes CTA */}
         <div className="text-center pt-4">
-          <Button
-            as={Link}
+          <Link
             href="/classes"
-            size="lg"
-            className="bg-card border border-border text-foreground font-extrabold text-sm px-8 hover:bg-accent hover:border-cyan-500/40 transition rounded-2xl shadow-sm"
-            endContent={<FaArrowRight className="h-4 w-4 text-cyan-500" />}>
-            Explore All Classes
-          </Button>
+            className="inline-flex items-center gap-2 bg-card border border-border text-foreground font-extrabold text-sm px-8 py-3.5 hover:bg-accent hover:border-cyan-500/40 transition rounded-2xl shadow-sm">
+            <span>Explore All Classes</span>
+            <FaArrowRight className="h-4 w-4 text-cyan-500" />
+          </Link>
         </div>
       </div>
     </section>

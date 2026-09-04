@@ -116,7 +116,7 @@ export default function RegisterPage() {
           `Account registered as ${formData.role === "trainer" ? "Trainer" : "User"}! Redirecting to login...`,
         );
         setTimeout(() => {
-          router.push("/login");
+          router.push("/");
         }, 1200);
       }
     } catch (err) {

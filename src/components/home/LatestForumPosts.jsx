@@ -22,7 +22,7 @@ export default function LatestForumPosts() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
 
   useEffect(() => {
     async function fetchLatestPosts() {
@@ -44,8 +44,8 @@ export default function LatestForumPosts() {
   }, [API_URL]);
 
   return (
-    <section className="py-20 px-4 sm:px-6 lg:px-8 bg-background border-b border-border">
-      <div className="max-w-7xl mx-auto space-y-12">
+    <section className="py-10 px-4 sm:px-6 lg:px-8 bg-background border-b border-border">
+      <div className="max-w-7xl mx-auto space-y-7">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto space-y-4">
           <span className="px-4 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-widest bg-blue-500/10 text-blue-500 border border-blue-500/20 inline-flex items-center gap-2">
@@ -156,14 +156,12 @@ export default function LatestForumPosts() {
 
         {/* View All Forum CTA */}
         <div className="text-center pt-2">
-          <Button
-            as={Link}
+          <Link
             href="/forum"
-            size="lg"
-            className="bg-card border border-border text-foreground font-extrabold text-sm px-8 hover:bg-accent hover:border-cyan-500/40 transition rounded-2xl shadow-sm"
-            endContent={<FaArrowRight className="h-4 w-4 text-cyan-500" />}>
-            Browse All Community Forum Articles
-          </Button>
+            className="inline-flex items-center gap-2 bg-card border border-border text-foreground font-extrabold text-sm px-8 py-3.5 hover:bg-accent hover:border-cyan-500/40 transition rounded-2xl shadow-sm">
+            <span>Browse All Community Forum Articles</span>
+            <FaArrowRight className="h-4 w-4 text-cyan-500" />
+          </Link>
         </div>
       </div>
     </section>

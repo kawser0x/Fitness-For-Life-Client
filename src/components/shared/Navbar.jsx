@@ -29,7 +29,7 @@ const Navbar = () => {
   const { data: session, isPending } = useSession();
   const user = session?.user;
 
-  const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
 
   // Fetch live role from backend database to handle dynamic role promotions (e.g. User -> Admin)
   const fetchLiveRole = useCallback(async () => {
